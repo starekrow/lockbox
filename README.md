@@ -161,8 +161,12 @@ lockbox keys you supply. This arrangement has the following interesting
 properties:
 
   * The value can be decrypted with multiple, independent passphrases
-  * A lockbox can be removed *without* decrypting the secret value.
-  * A lockbox can only be added by someone who can decrypt the secret.
+  * The value can be updated by anyone with a valid lockbox key. Other 
+    key-holders will then see the updated value.
+  * A lockbox can be removed *without* decrypting the value.
+  * A lockbox can only be added by a valid key-holder.
+  * A lockbox key cannot be used to learn anything about the other lockbox keys
+    (except their public ID, which is in the clear anyway).
 
 Like keys, secrets are rendered in an ASCII-safe printable package (in this
 case, a JSON wrapper around some base-64 strings) with `Export()` and can be
