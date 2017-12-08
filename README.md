@@ -154,12 +154,11 @@ needs to be protected. Each secret consists of three parts:
   * One or more *lockboxes* is attached.
 
 The secret is created with any value, and can be locked (or unlocked) with one 
-or more different keys, using a virtual "lockbox" 
-model. Under the hood, each secret includes a 256-bit "internal key" that is 
-used to encrypt the secret's value. That key is itself encrypted separately by 
-each "lockbox key" applied to the secret.
-
-This arrangement has the following interesting properties:
+or more different keys, using a virtual lockbox model. In this model, the 
+secret's value is encrypted with the internal key. However, the 
+internal key is never saved directly, but is itself encrypted by the various 
+lockbox keys you supply. This arrangement has the following interesting 
+properties:
 
   * The value can be decrypted with multiple, independent passphrases
   * A lockbox can be removed *without* decrypting the secret value.
