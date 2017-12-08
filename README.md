@@ -71,20 +71,26 @@ Interestingly, `secret.txt` contains something like:
 
 	{
 	    "locks": {
-	        "5e2ebf46-26be-430e-bb6a-688e56943b08": "YZ1mbdLDxKihdXY
-	t9h0C8zO0asoB55hw1Nn4QCQ1bS1Bl34A38ZHUP/ly8qlT+iclB6uRwAYt9gEBX9
-	ADSWrACa97hlGrehpz7yLkEns9LT5yN49bteWVxg3To2wAfrVg/Pk8cyJqg0YbIg
-	yShXQx5N6wBEstcRv2bzrwHx8FBeeA9c422R0T+HQ1ki6VOf2K7CJxiLDIAnRdZa
-	nHzHq4A=="
+	        "17e9c178-7a99-47ac-a422-5ec9a9e0a6e8": "2W2ElRE4S7xu93xx
+	        cvIF7dubb+46YhgZKDS3Lnztc7YDL+Had4nNIRqZ03jzW8w1IaZtMAudF
+	        TQFLejVYMwDeHnpHotBR5UBo0TZq4jgW2hetGbahLOpni3hhwbU9at8By
+	        34Dj53UfK84pXyOe2RH90+b/vL9OLAD51hupsbI2TlKPjCsys8V3EhaIz
+	        0a57yCKhAyMarZkyklRKvFYvbKw==",
+	        "0188b485-0937-4695-a0d6-5f968b286fc9": "Ugq4MuwOfvyKlREh
+	        VJDFLuRR8U7O6y0e3KYD2Gllk4QC0EaC2MJDtJ9yCkePF49zsukgmjSpH
+	        vhAjg1ZN3yWEOR8DE3kDY8rai9RC1LRRC0iK2nTg7DqCsvUV57nY1mG5M
+	        VpW8LXAirjRtCasj2yJu1D1JY0U06hXpSDoVzaLSFqPoRoSAI231SwISg
+	        nqhLCUEt7L7LGwIt3voMehH6wxg=="
 	    },
-	    "data": "zGREMJhcAT3vOxbRymvZkoeSHlR8EQESoOfpJJvgqSuxJIz5bAM
-	g4eVph+Gf3KXkVa1baZSaX4dwYbSIWWm1z31ygCAEvrWZc8kzRFnFKqk="
+	    "data": "+2uEgQ52VGOVvGu41umPhjurmqhoXHMqhbzoFeQuWs63rFQNVW9H
+	    K3dlEddEyZfoe+lXT2M5MElUfdXF1vWZ8mLiorVkN8N+Waz6YeyZ3CePpYPNs
+	    ZT9yMCWAQNwnTjU"
 	}
 
 And `key.txt` contains:
 
-	k0|5e2ebf46-26be-430e-bb6a-688e56943b08|QUVTLTEyOC1DQkM=|eW91d2ls
-	bG5ldmVyZ3Vlc3N0aGlz
+	k0|17e9c178-7a99-47ac-a422-5ec9a9e0a6e8|QUVTLTEyOC1DQkM=|Y29ycmVj
+	dGhvcnNlYmF0dGVyeXN0YXBsZQ==
 
 Create a vault and put a value into it:
 
