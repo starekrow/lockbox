@@ -79,7 +79,7 @@ This arrangement has the following interesting properties:
 
 ### Vaults
 
-The provided `Vault` class manages a collection of secrets on-disk. You provide
+The `Vault` class manages a collection of secrets on-disk. You provide
 a directory for the vault to occupy, and the master key and secrets are written
 to individual files within that directory.
 
@@ -87,7 +87,7 @@ When using a vault, all the key and secret management is handled for you; you
 just provide the passphrase when creating or opening the vault, and then put
 values into the vault or get them from it.
 
-The `Vault` class provides for changing the passphrase used to encrypt the 
+This class provides for changing the passphrase used to encrypt the 
 master key and rotating the master key itself in each of the secrets in the 
 vault. 
 
