@@ -1,48 +1,74 @@
 # Lockbox
 
-Lockbox provides an interface for working with encrypted secret values. Each
-value can be locked with one or more keys, making some kinds of key management
-much easier than usual.
+Lockbox is a simple, tiered system for working with cryptographic keys and 
+encrypted data. It provides a set of easy-to-use interfaces that encourage
+a "secure by default" design.
 
-The default encryption is 128-bit AES.
+There are three primary concepts to Lockbox: *Keys*, *secrets* and *vaults*.
+Keys are used for encryption or decryption of data. Secrets are data values 
+that can be read or written using multiple keys. A vault is one way to store
+a collection of secrets, that also comes with some built-in key management 
+tools.
 
-There are three classes provided:
+Interesting fact: The classes here were originally designed to support 
+responsible handling of authentication tokens for server applications, to
+ensure that the various passwords and API keys for production servers weren't 
+just dumped in plain text into the file system. This is particularly important
+for cloud servers, where access to the disk images is entirely out of the 
+so-called "site owner's" control.
 
-  * `Secret` - Storage and handling of secret values. Converts secrets to and
-    from a printable representation, and manages lockboxes.
-  * `CryptoKey` - Storage and services for cryptographic keys. Handles simple 
-	encryption, decryption and converts keys to and from a printable 
-	representation. Provides for cipher selection.
-  * `Vault` - Manages an on-disk store of multiple secrets, locked with a 
-    single master key. Also provides passphrase management and key rotation.
+## Quick-Start
 
-### Using Lockbox
+To encrypt some data:
 
-Some example code:
+	// CryptoKey defaults to AES-128-CBC encryption with a random key
+	$key = new CryptoKey();
+	$message = "You can't see me.";
+	$ciphertext = $key->Lock( $message );
 
-	use Lockbox\Secret;
-	use Lockbox\CryptoKey;
+	file_put_contents( "key.txt", $k->Export() );
+	file_put_contents( "cipher.txt", $ciphertext );
 
-	$s = new Secret( "Sooper seekrit text" );
-	$k = new CryptoKey( "youwillneverguessthis" );
+To decrypt some encrypted data:
+
+	$key = CryptoKey::Import( file_get_contents( "key.txt" ) );
+	$ciphertext = file_get_contents( "cipher.txt" );
+	$message = $key->Unlock( $ciphertext );
+	echo $message; 			// "You can't see me."
+
+To use a specified key and a different cipher:
+
+	$key = new CryptoKey( "ILikeCheese", null, "AES-256-ECB" );
+	$no_see_um = $key->Lock( "This text is safe." );
+	$see_um = $key->Unlock( $no_see_um );
+
+> Note that if your key is not the expected length for the given cipher, PHP's
+`openssl` extension will apply some default padding or cropping to your key
+data. For interoperability with non-PHP crypto systems, be sure to specify the 
+key at the proper length for your chosen cipher.
+
+To encrypt some data (even structured data) so that it can be decrypted with 
+more than one key:
+
+	$s = new Secret( [ "my stuff" => "Sooper seekrit" ] );
+	$k = new CryptoKey( "correcthorsebatterystaple" );
+	$k2 = new CryptoKey( "ILikeCheese" );
 	$s->AddLockbox( $k );
-
-	echo "Secret:\n" . $s->Export() . "\n";
-	echo "Key: " . $k->Export() . "\n";
-
+	$s->AddLockbox( $k2 );
 	file_put_contents( "secret.txt", $s->Export() );
 	file_put_contents( "key.txt", $k->Export() );
+	file_put_contents( "key2.txt", $k2->Export() );
 
-	// ...
+To get that data back:
 
-	$k = CryptoKey::Import( file_get_contents( "key.txt" ) );
 	$s = Secret::Import( file_get_contents( "secret.txt" ) );
+	$k = CryptoKey::Import( file_get_contents( "key.txt" ) );
 	$s->Unlock( $k );
-	echo $s->Read();
+	$val = $s->Read();
+	echo $val["my stuff"]; 				// "Sooper seekrit"
 
-The corresponding output (the data key and ID are random each time):
+Interestingly, `secret.txt` contains something like:
 
-	Secret:
 	{
 	    "locks": {
 	        "5e2ebf46-26be-430e-bb6a-688e56943b08": "YZ1mbdLDxKihdXY
@@ -54,22 +80,78 @@ The corresponding output (the data key and ID are random each time):
 	    "data": "zGREMJhcAT3vOxbRymvZkoeSHlR8EQESoOfpJJvgqSuxJIz5bAM
 	g4eVph+Gf3KXkVa1baZSaX4dwYbSIWWm1z31ygCAEvrWZc8kzRFnFKqk="
 	}
-	Key: k0|5e2ebf46-26be-430e-bb6a-688e56943b08|QUVTLTEyOC1DQkM=|eW
-	91d2lsbG5ldmVyZ3Vlc3N0aGlz
-	Sooper seekrit text
 
+And `key.txt` contains:
 
-### How it Works
+	k0|5e2ebf46-26be-430e-bb6a-688e56943b08|QUVTLTEyOC1DQkM=|eW91d2ls
+	bG5ldmVyZ3Vlc3N0aGlz
 
-Each secret value is stored in three parts:
+Create a vault and put a value into it:
 
-  * The value itself is a binary string
-  * A random 256-bit *internal key* is used to encrypt the value
-  * One or more *lockboxes* is attached
+	$v = new Lockbox\Vault( "./secrets" );
+	$v->CreateVault( "CorrectHorseBatteryStaple" );
+	$v->Put( "test1", "This is a test." );
+	$v->Close();
 
-The *internal key* is never used directly. Instead, you add a *lockbox* to the
-secret. This stores the internal key encrypted with a passphrase (supplied by
-you).
+Open an existing vault and read a value from it:
+
+	$v = new Lockbox\Vault( "./secrets" );
+	$v->Open( "CorrectHorseBatteryStaple" );
+	$got = $v->Get( "test1" );
+	echo $got;						// prints "This is a test."
+
+## How it Works
+
+Each tier of the interface adds capabilities:
+
+  * `CryptoKey` handles basic encryption and decryption, and packages both the
+    keys and the ciphertext for output, verification and decryption.
+  * `Secret` is a managed, encrypted data value with lockbox-style key 
+    handling.
+  * A `Vault` is file-based storage for secrets, with a master key and some
+    additional key management tools.
+
+### CryptoKey
+
+All of the actual encryption and decryption is done with `CryptoKey` instances. 
+These bundle together the pieces - cipher type and key data, along with a 
+unique key identifier to help with higher-level management - needed to 
+successfully decrypt a previously encrypted message. They also produce 
+representations of themselves and of the encrypted messages in tidy, 
+ASCII-safe strings.
+
+Think of a key as a complete encryption package: You use the key to lock 
+plaintext (producing ciphertext) and to unlock ciphertext (producing plaintext).
+
+A `CryptoKey` can be built with an (optional) passphrase, an (optional) id
+string and an (optional) cipher specifier. Any parameter that isn't 
+specified is filled with a reasonable default: A 256-bit random key, a 128-bit 
+(well, 123-bit) random ID formatted as a GUID, and an AES-128-CBC cipher.
+
+The output of a `Lock()` operation includes the IV used and an HMAC of the 
+ciphertext, as well as the ciphertext itself. Those are then concatenated and 
+base-64 encoded. The result can be easily verified and decrypted with 
+`Unlock()`.
+
+The keys themselves, along with the exact cipher used and the key identifier,
+can be converted to a simple printable string representation with `Export()`
+and read back in with `Import()`. 
+
+### Secret
+
+The `Secret` class provides a more extensive interface to handling a value that 
+needs to be protected. Each secret consists of three parts:
+
+  * The value itself is a binary string. Serialization from and to other data
+    types is automatic.
+  * A random 256-bit *internal key* is used to encrypt the value.
+  * One or more *lockboxes* is attached.
+
+The secret is created with any value, and can be locked (or unlocked) with one 
+or more different keys, using a virtual "lockbox" 
+model. Under the hood, each secret includes a 256-bit "internal key" that is 
+used to encrypt the secret's value. That key is itself encrypted separately by 
+each "lockbox key" applied to the secret.
 
 This arrangement has the following interesting properties:
 
@@ -77,43 +159,54 @@ This arrangement has the following interesting properties:
   * A lockbox can be removed *without* decrypting the secret value.
   * A lockbox can only be added by someone who can decrypt the secret.
 
-### Vaults
+Like keys, secrets are rendered in an ASCII-safe printable package (in this
+case, a JSON wrapper around some base-64 strings) with `Export()` and can be
+reconstituted with `Import()`. `AddLockbox()` takes a key you supply and 
+encrypts the internal key with it, adding the resulting virtual lockbox to the
+secret. Additional management can be done with `RemoveLockbox()`, 
+`HasLockbox()` and `ListLockboxes()`. 
 
-The `Vault` class manages a collection of secrets on-disk. You provide
-a directory for the vault to occupy, and the master key and secrets are written
-to individual files within that directory.
+`Unlock()` takes a key matching any lockbox and decrypts the internal key from 
+the lockbox. `Lock()` just discards any saved copies of the internal key and 
+decrypted value. 
 
-When using a vault, all the key and secret management is handled for you; you
-just provide the passphrase when creating or opening the vault, and then put
-values into the vault or get them from it.
+If the secret has been unlocked, you can use `Read()` to get the value out of 
+it, and `Update()` to change it.
 
-This class provides for changing the passphrase used to encrypt the 
-master key and rotating the master key itself in each of the secrets in the 
-vault. 
+### Vault
 
-### Using Vaults
+A `Vault` uses the properties of the `Secret` class to provide an encrypted
+key-value store on disk that is as robust to interruption as the underlying 
+file system. 
 
-Some example code:
+You supply the name of a directory for the vault, and the secrets are stored in 
+individual files in that directory. A random 
+*master key* is generated and used to encrypt each one. That
+master key is itself encrypted with a passphrase, an arrangement that allows the
+passphrase to be changed without changing the master key, and allows the master
+key itself to be rotated in stages, no matter the size of the vault.
 
-	$v = new Lockbox\Vault( "./secrets" );
-	$v->CreateVault( "CorrectHorseBatteryStaple" );
-	$v->Put( "test1", "This is a test." );
-	$v->Close();
+When using a vault, all the key and secret management is handled for you. Use
+`CreateVault()` to set up a new vault (this will fail if a vault already 
+exists in the chosen directory) or `Open()` to open an existing one. 
+`VaultExists()` and `DestroyVault()` round out the vault management suite.
+`Close()` forgets all keys and cached secrets without affecting the vault
+on disk.
 
-	// ...
+Manage values within the vault with `Put()`, `Get()`, `Has()`, `Remove()` and
+`PerSecret()`.
 
-	$v = new Lockbox\Vault( "./secrets" );
-	$v->Open( "CorrectHorseBatteryStaple" );
-	$got = $v->Get( "test1" );
-	echo $got;						// prints "This is a test."
+You can change the passphrase used to encrypt the master key with 
+`ChangePassphrase()`. This is a comparatively fast and safe operation, affecting
+only one file. Rotate the master key itself with `RotateMasterKey()`.
 
-### Exposure Risks
+## Exposure Risks
 
 This being PHP, there's no way (barring extensions) to actually scrub the 
 contents of RAM. It might in fact not even be useful to do so anyway, due to 
-other information leaks allowed by many OS configurations. In-process damage
-(e.g. Heartbleed) might also defeat such measures. The following steps 
-are taken to try to minimize the exposure risk:
+other information leaks (swap files) allowed by many OS configurations. 
+In-process damage (e.g. Heartbleed) might also defeat such measures. The 
+following steps are taken to try to minimize the exposure risk:
 
   * Secrets can be loaded without supplying a key at all. This leaves just the
     encrypted text and the encrypted lockboxes in RAM. So you can prospectively
