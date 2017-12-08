@@ -26,7 +26,7 @@ To encrypt some data:
 	$message = "You can't see me.";
 	$ciphertext = $key->Lock( $message );
 
-	file_put_contents( "key.txt", $k->Export() );
+	file_put_contents( "key.txt", $key->Export() );
 	file_put_contents( "cipher.txt", $ciphertext );
 
 To decrypt some encrypted data:
