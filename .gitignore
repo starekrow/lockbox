@@ -1,2 +1,4 @@
 *.sublime-project
 *.sublime-workspace
+vendor
+composer.lock

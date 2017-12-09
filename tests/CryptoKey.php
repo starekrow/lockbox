@@ -1,12 +1,13 @@
 <?php
-namespace Lockbox;
+namespace starekrow\Lockbox\tests;
+
+use starekrow\Lockbox\CryptoKey;
+use starekrow\Lockbox\Secret;
+use starekrow\Lockbox\Vault;
 
 require_once __DIR__ . "/TestFramework.php";
-require_once __DIR__ . "/../CryptoKey.php";
-require_once __DIR__ . "/../Secret.php";
-require_once __DIR__ . "/../Vault.php";
 
-class test_CryptoKey extends \TestFramework
+class test_CryptoKey extends TestFramework
 {
 	function t00_Construct()
 	{
