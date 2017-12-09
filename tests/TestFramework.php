@@ -1,6 +1,11 @@
 <?php
+namespace starekrow\Lockbox\tests;
 
-class TestFramework_Fail extends \Exception
+require_once __DIR__ . "/../vendor/autoload.php";
+
+use Exception;
+
+class TestFramework_Fail extends Exception
 {
 }
 
