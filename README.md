@@ -21,26 +21,32 @@ so-called "site owner's" control.
 
 To encrypt some data:
 
-	// CryptoKey defaults to AES-128-CBC encryption with a random key
-	$key = new CryptoKey();
-	$message = "You can't see me.";
-	$ciphertext = $key->Lock( $message );
+```php
+// CryptoKey defaults to AES-128-CBC encryption with a random key
+$key = new CryptoKey();
+$message = "You can't see me.";
+$ciphertext = $key->Lock( $message );
 
-	file_put_contents( "key.txt", $key->Export() );
-	file_put_contents( "cipher.txt", $ciphertext );
+file_put_contents( "key.txt", $key->Export() );
+file_put_contents( "cipher.txt", $ciphertext );
+```
 
 To decrypt some encrypted data:
 
-	$key = CryptoKey::Import( file_get_contents( "key.txt" ) );
-	$ciphertext = file_get_contents( "cipher.txt" );
-	$message = $key->Unlock( $ciphertext );
-	echo $message; 			// "You can't see me."
+```php
+$key = CryptoKey::Import( file_get_contents( "key.txt" ) );
+$ciphertext = file_get_contents( "cipher.txt" );
+$message = $key->Unlock( $ciphertext );
+echo $message; 			// "You can't see me."
+```
 
 To use a specified key and a different cipher:
 
-	$key = new CryptoKey( "ILikeCheese", null, "AES-256-ECB" );
-	$no_see_um = $key->Lock( "This text is safe." );
-	$see_um = $key->Unlock( $no_see_um );
+```php
+$key = new CryptoKey( "ILikeCheese", null, "AES-256-ECB" );
+$no_see_um = $key->Lock( "This text is safe." );
+$see_um = $key->Unlock( $no_see_um );
+```
 
 > Note that if your key is not the expected length for the given cipher, PHP's
 `openssl` extension will apply some default padding or cropping to your key
@@ -50,61 +56,73 @@ key at the proper length for your chosen cipher.
 To encrypt some data (even structured data) so that it can be decrypted with 
 more than one key:
 
-	$s = new Secret( [ "my stuff" => "Sooper seekrit" ] );
-	$k = new CryptoKey( "correcthorsebatterystaple" );
-	$k2 = new CryptoKey( "ILikeCheese" );
-	$s->AddLockbox( $k );
-	$s->AddLockbox( $k2 );
-	file_put_contents( "secret.txt", $s->Export() );
-	file_put_contents( "key.txt", $k->Export() );
-	file_put_contents( "key2.txt", $k2->Export() );
+```php
+$s = new Secret( [ "my stuff" => "Sooper seekrit" ] );
+$k = new CryptoKey( "correcthorsebatterystaple" );
+$k2 = new CryptoKey( "ILikeCheese" );
+$s->AddLockbox( $k );
+$s->AddLockbox( $k2 );
+file_put_contents( "secret.txt", $s->Export() );
+file_put_contents( "key.txt", $k->Export() );
+file_put_contents( "key2.txt", $k2->Export() );
+```
 
 To get that data back:
 
-	$s = Secret::Import( file_get_contents( "secret.txt" ) );
-	$k = CryptoKey::Import( file_get_contents( "key.txt" ) );
-	$s->Unlock( $k );
-	$val = $s->Read();
-	echo $val["my stuff"]; 				// "Sooper seekrit"
+```php
+$s = Secret::Import( file_get_contents( "secret.txt" ) );
+$k = CryptoKey::Import( file_get_contents( "key.txt" ) );
+$s->Unlock( $k );
+$val = $s->Read();
+echo $val["my stuff"]; 				// "Sooper seekrit"
+```
 
 Interestingly, `secret.txt` contains something like:
 
-	{
-	    "locks": {
-	        "17e9c178-7a99-47ac-a422-5ec9a9e0a6e8": "2W2ElRE4S7xu93xx
-	cvIF7dubb+46YhgZKDS3Lnztc7YDL+Had4nNIRqZ03jzW8w1IaZtMAudFTQFLejVY
-	MwDeHnpHotBR5UBo0TZq4jgW2hetGbahLOpni3hhwbU9at8By34Dj53UfK84pXyOe
-	2RH90+b/vL9OLAD51hupsbI2TlKPjCsys8V3EhaIz0a57yCKhAyMarZkyklRKvFYv
-	bKw==",
-	        "0188b485-0937-4695-a0d6-5f968b286fc9": "Ugq4MuwOfvyKlREh
-	VJDFLuRR8U7O6y0e3KYD2Gllk4QC0EaC2MJDtJ9yCkePF49zsukgmjSpHvhAjg1ZN
-	3yWEOR8DE3kDY8rai9RC1LRRC0iK2nTg7DqCsvUV57nY1mG5MVpW8LXAirjRtCasj
-	2yJu1D1JY0U06hXpSDoVzaLSFqPoRoSAI231SwISgnqhLCUEt7L7LGwIt3voMehH6
-	wxg=="
-	    },
-	    "data": "+2uEgQ52VGOVvGu41umPhjurmqhoXHMqhbzoFeQuWs63rFQNVW9H
-	K3dlEddEyZfoe+lXT2M5MElUfdXF1vWZ8mLiorVkN8N+Waz6YeyZ3CePpYPNsZT9y
-	MCWAQNwnTjU"
-	}
+```json
+{
+    "locks": {
+	"17e9c178-7a99-47ac-a422-5ec9a9e0a6e8": "2W2ElRE4S7xu93xx
+cvIF7dubb+46YhgZKDS3Lnztc7YDL+Had4nNIRqZ03jzW8w1IaZtMAudFTQFLejVY
+MwDeHnpHotBR5UBo0TZq4jgW2hetGbahLOpni3hhwbU9at8By34Dj53UfK84pXyOe
+2RH90+b/vL9OLAD51hupsbI2TlKPjCsys8V3EhaIz0a57yCKhAyMarZkyklRKvFYv
+bKw==",
+	"0188b485-0937-4695-a0d6-5f968b286fc9": "Ugq4MuwOfvyKlREh
+VJDFLuRR8U7O6y0e3KYD2Gllk4QC0EaC2MJDtJ9yCkePF49zsukgmjSpHvhAjg1ZN
+3yWEOR8DE3kDY8rai9RC1LRRC0iK2nTg7DqCsvUV57nY1mG5MVpW8LXAirjRtCasj
+2yJu1D1JY0U06hXpSDoVzaLSFqPoRoSAI231SwISgnqhLCUEt7L7LGwIt3voMehH6
+wxg=="
+    },
+    "data": "+2uEgQ52VGOVvGu41umPhjurmqhoXHMqhbzoFeQuWs63rFQNVW9H
+K3dlEddEyZfoe+lXT2M5MElUfdXF1vWZ8mLiorVkN8N+Waz6YeyZ3CePpYPNsZT9y
+MCWAQNwnTjU"
+}
+```
 
 And `key.txt` contains:
 
-	k0|17e9c178-7a99-47ac-a422-5ec9a9e0a6e8|QUVTLTEyOC1DQkM=|Y29ycmVj
-	dGhvcnNlYmF0dGVyeXN0YXBsZQ==
+```
+k0|17e9c178-7a99-47ac-a422-5ec9a9e0a6e8|QUVTLTEyOC1DQkM=|Y29ycmVj
+dGhvcnNlYmF0dGVyeXN0YXBsZQ==
+```
 
 Create a vault and put a value into it:
 
-	$v = new Lockbox\Vault( "./secrets" );
-	$v->CreateVault( "CorrectHorseBatteryStaple" );
-	$v->Put( "test1", "This is a test." );
-	$v->Close();
+```php
+$v = new Lockbox\Vault( "./secrets" );
+$v->CreateVault( "CorrectHorseBatteryStaple" );
+$v->Put( "test1", "This is a test." );
+$v->Close();
+```
 
 Open an existing vault and read a value from it:
 
-	$v = new Lockbox\Vault( "./secrets" );
-	$v->Open( "CorrectHorseBatteryStaple" );
-	$got = $v->Get( "test1" );
-	echo $got;						// prints "This is a test."
+```php
+$v = new Lockbox\Vault( "./secrets" );
+$v->Open( "CorrectHorseBatteryStaple" );
+$got = $v->Get( "test1" );
+echo $got;						// prints "This is a test."
+```
 
 ## How it Works
 
