@@ -13,7 +13,10 @@
     "autoload": {
         "psr-4": {
             "starekrow\\Lockbox\\": "src/",
-            "starekrow\\Lockbox\\tests\\": "framework/"
+            "starekrow\\Lockbox\\Tests\\": "tests/"
         }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.5"
     }
 }
