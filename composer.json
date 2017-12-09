@@ -1,0 +1,19 @@
+{
+    "name": "starekrow/lockbox",
+    "description": "Lockbox is a simple, tiered system for working with cryptographic keys and encrypted data.",
+    "keywords": [
+        "lockbox",
+        "vault"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": ">=7.0.0",
+        "ext-openssl": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "starekrow\\Lockbox\\": "src/",
+            "starekrow\\Lockbox\\tests\\": "framework/"
+        }
+    }
+}

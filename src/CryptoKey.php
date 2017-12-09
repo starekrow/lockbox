@@ -1,7 +1,7 @@
 <?php /* Copyright (C) 2017 David O'Riva. MIT License.
        * Original at: https://github.com/starekrow/lockbox
        ********************************************************/
-namespace Lockbox;
+namespace starekrow\Lockbox;
 
 /*
 ================================================================================
