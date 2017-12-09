@@ -79,7 +79,7 @@ echo $val["my stuff"]; 				// "Sooper seekrit"
 
 Interestingly, `secret.txt` contains something like:
 
-```json
+```javascript
 {
     "locks": {
 	"17e9c178-7a99-47ac-a422-5ec9a9e0a6e8": "2W2ElRE4S7xu93xxcvIF7dubb+46YhgZKDS3Lnztc7YDL+Had4nNIRqZ03jzW8w1IaZtMAudFTQFLejVYMwDeHnpHotBR5UBo0TZq4jgW2hetGbahLOpni3hhwbU9at8By34Dj53UfK84pXyOe2RH90+b/vL9OLAD51hupsbI2TlKPjCsys8V3EhaIz0a57yCKhAyMarZkyklRKvFYvbKw==",
@@ -92,8 +92,7 @@ Interestingly, `secret.txt` contains something like:
 And `key.txt` contains:
 
 ```
-k0|17e9c178-7a99-47ac-a422-5ec9a9e0a6e8|QUVTLTEyOC1DQkM=|Y29ycmVj
-dGhvcnNlYmF0dGVyeXN0YXBsZQ==
+k0|17e9c178-7a99-47ac-a422-5ec9a9e0a6e8|QUVTLTEyOC1DQkM=|Y29ycmVjdGhvcnNlYmF0dGVyeXN0YXBsZQ==
 ```
 
 Create a vault and put a value into it:
