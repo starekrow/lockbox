@@ -19,6 +19,26 @@ so-called "site owner's" control.
 
 ## Quick-Start
 
+### Manual Install
+
+Grab all the files from the `src/` directory here and stick them somewhere.
+Require, or arrange to autoload them.
+
+### Composer Install
+
+See https://packagist.org/packages/starekrow/lockbox. Greetz to @KJLJon.
+
+### Using Lockbox
+
+Suck the classes you'll be using into your namespace (or don't, but you'll be 
+typing "starekrow" a lot).
+
+```php
+use starekrow\Lockbox\CryptoKey;
+use starekrow\Lockbox\Secret;
+use starekrow\Lockbox\Vault;
+```
+
 To encrypt some data:
 
 ```php
@@ -98,7 +118,7 @@ k0|17e9c178-7a99-47ac-a422-5ec9a9e0a6e8|QUVTLTEyOC1DQkM=|Y29ycmVjdGhvcnNlYmF0dGV
 Create a vault and put a value into it:
 
 ```php
-$v = new Lockbox\Vault( "./secrets" );
+$v = new Vault( "./secrets" );
 $v->CreateVault( "CorrectHorseBatteryStaple" );
 $v->Put( "test1", "This is a test." );
 $v->Close();
@@ -107,7 +127,7 @@ $v->Close();
 Open an existing vault and read a value from it:
 
 ```php
-$v = new Lockbox\Vault( "./secrets" );
+$v = new Vault( "./secrets" );
 $v->Open( "CorrectHorseBatteryStaple" );
 $got = $v->Get( "test1" );
 echo $got;						// prints "This is a test."
