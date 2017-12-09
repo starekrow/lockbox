@@ -33,6 +33,52 @@ class CryptoKey
 
 	/*
 	=====================
+	HashEquals (static) - Compare hashes in contant time
+	=====================
+	*/
+	public static function HashEquals( $h1, $h2 )
+	{
+		if (is_function( "hash_equals" )) {
+			return hash_equals( $h1, $h2 );
+		}
+		if (strlen($str1) != strlen($str2)) {
+			return false;
+		} else {
+			$res = $str1 ^ $str2;
+			$ret = 0;
+			for ($i = strlen($res) - 1; $i >= 0; $i--) {
+				$ret |= ord($res[$i]);
+			}
+			return !$ret;
+		}
+	}
+
+	/*
+	=====================
+	HashHKDF (static) - Compute HKDF
+
+	Only a few hash functions are required for our purposes.
+	=====================
+	*/
+	public static function HashHKDF( $alg, $ikm, 
+		$length = null, $info = "", $salt = "" )
+	{
+		if (is_function( "hash_hkdf" )) {
+			return hash_hkdf( $alg, $ikm, $length, $info, $salt );
+		}
+		$prk = hash_hmac( $alg, $ikm, $salt, true );
+		$okm = "";
+		$t = "";
+		for ($i = 1; strlen( $okm ) < $length; $i++)
+		{
+			$t = hash_hmac( $alg, $t . $info . chr($i), $prk, true );
+			$okm .= $t;
+		}
+		return substr( $okm, 0, $length );
+    }
+
+	/*
+	=====================
 	Lock - Encrypt a message with this key
 
 	Returns printable ciphertext for the binary message, or `false` if the key 
