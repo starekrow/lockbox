@@ -187,7 +187,7 @@ internal key is never saved directly, but is itself encrypted by the various
 lockbox keys you supply. This arrangement has the following interesting 
 properties:
 
-  * The value can be decrypted with multiple, independent passphrases
+  * The value can be decrypted with multiple, independent passphrases.
   * The value can be updated by anyone with a valid lockbox key. Other 
     key-holders will then see the updated value.
   * A lockbox can be removed *without* decrypting the value.
