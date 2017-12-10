@@ -1,31 +1,37 @@
-<?php /* Copyright (C) 2017 David O'Riva. MIT License.
-       * Original at: https://github.com/starekrow/lockbox
-       ********************************************************/
+<?php
+/**
+ * Copyright (C) 2017 David O'Riva. MIT License.
+ * Original at: https://github.com/starekrow/lockbox
+ */
 
 namespace starekrow\Lockbox;
 
-/*
-================================================================================
-Secret - Management for secret values with multiple lockboxes
-
-When a secret is created, a new internal key is generated to encrypt it. You 
-never work with this key directly. Instead, you add your own keys to the 
-secret. Each key you add will create a corresponding lockbox that contains the
-internal key. This can be used to support a number of traditionally difficult 
-features, like non-atomic key rotation and separation of key management from 
-secret value access.
-
-Storage of secret data is outside the scope of this class. Use the provided
-Import() and Export() functions to work with a printable representation of 
-the encrypted secret data and lockboxes.
-
-TODO: extend serializable
-================================================================================
-*/
+/**
+ * Secret - Management for secret values with multiple lockboxes
+ *
+ * When a secret is created, a new internal key is generated to encrypt it. You
+ * never work with this key directly. Instead, you add your own keys to the
+ * secret. Each key you add will create a corresponding lockbox that contains the
+ * internal key. This can be used to support a number of traditionally difficult
+ * features, like non-atomic key rotation and separation of key management from
+ * secret value access.
+ *
+ * Storage of secret data is outside the scope of this class. Use the provided
+ * Import() and Export() functions to work with a printable representation of
+ * the encrypted secret data and lockboxes.
+ *
+ * TODO: extend serializable
+ *
+ * @package starekrow\Lockbox
+ */
 class Secret
 {
-    /* `locked` - whether the secret is currently locked. It's read only.
-       Don't make me stick it behind a getter. */
+    /**
+     * whether the secret is currently locked. It's read only.
+     * Don't make me stick it behind a getter.
+     *
+     * @var bool
+     */
     public $locked;
     protected $value;
     protected $decrypted;
@@ -33,21 +39,24 @@ class Secret
     protected $key;
     protected $ciphertext;
 
-    /*
-    =====================
-    Unlock - Unlocks the secret
 
-    Supply a CryptoKey (in exported or instantiated form).
-
-    If no key is given, returns true if the secret is already unlocked.
-    Otherwise, returns true if the given key fits a lockbox.
-
-    The secret value is not actually decrypted here, but on the first call to
-    Read(). This supports the case where you are adding, removing or rotating a
-    key and there is no need to risk exposing the fully decrypted secret value
-    in RAM.
-    =====================
-    */
+    /**
+     * Unlock - Unlocks the secret
+     *
+     * Supply a CryptoKey (in exported or instantiated form).
+     *
+     * If no key is given, returns true if the secret is already unlocked.
+     * Otherwise, returns true if the given key fits a lockbox.
+     *
+     * The secret value is not actually decrypted here, but on the first call to
+     * Read(). This supports the case where you are adding, removing or rotating a
+     * key and there is no need to risk exposing the fully decrypted secret value
+     * in RAM.
+     *
+     * @param $key
+     *
+     * @return bool
+     */
     public function unlock($key = null)
     {
         if (!$key) {
@@ -73,13 +82,13 @@ class Secret
         return true;
     }
 
-    /*
-    =====================
-    Lock - Lock the secret
-
-    Erases the stored data key and decrypted value.
-    =====================
-    */
+    /**
+     * Lock - Lock the secret
+     *
+     * Erases the stored data key and decrypted value.
+     *
+     * @return bool
+     */
     public function lock()
     {
         if ($this->locked) {
@@ -92,15 +101,17 @@ class Secret
         return true;
     }
 
-    /*
-    =====================
-    Update
-
-    Update the secret value. The secret must already be unlocked.
-
-    Returns `true` if the value was updated, otherwise `false`.
-    =====================
-    */
+    /**
+     * Update
+     *
+     * Update the secret value. The secret must already be unlocked.
+     *
+     * Returns `true` if the value was updated, otherwise `false`.
+     *
+     * @param $value
+     *
+     * @return bool
+     */
     public function update($value)
     {
         if ($this->locked) {
@@ -120,13 +131,13 @@ class Secret
         return true;
     }
 
-    /*
-    =====================
-    Read
-
-    Gets the secret's value (or `false` if it cannot be decrypted).
-    =====================
-    */
+    /**
+     * Read
+     *
+     * Gets the secret's value (or `false` if it cannot be decrypted).
+     *
+     * @return bool|mixed|string
+     */
     public function read()
     {
         if ($this->decrypted) {
@@ -141,21 +152,25 @@ class Secret
         }
         if ($value[0] == "s") {
             $this->value = substr($value, 1);
-        } else if ($value[0] == "p") {
-            $this->value = unserialize(substr($value, 1));
+        } else {
+            if ($value[0] == "p") {
+                $this->value = unserialize(substr($value, 1));
+            }
         }
         $this->decrypted = true;
         return $this->value;
     }
 
-    /*
-    =====================
-    AddLockbox
-
-    Adds a lockbox to the secret. The secret must already be unlocked for this
-    to succeed.
-    =====================
-    */
+    /**
+     * AddLockbox
+     *
+     * Adds a lockbox to the secret. The secret must already be unlocked for this
+     * to succeed.
+     *
+     * @param $key
+     *
+     * @return bool
+     */
     public function addLockbox($key)
     {
         if (is_string($key)) {
@@ -166,58 +181,63 @@ class Secret
     }
 
 
-    /*
-    =====================
-    RemoveLockbox
-
-    Removes a lock from the secret. Works whether the secret is unlocked or
-    not.
-
-    Returns `true` if the lock was found and removed, otherwise `false`.
-    =====================
-    */
+    /**
+     * RemoveLockbox
+     *
+     * Removes a lock from the secret. Works whether the secret is unlocked or
+     * not.
+     *
+     * Returns `true` if the lock was found and removed, otherwise `false`.
+     *
+     * @param $id
+     *
+     * @return bool
+     */
     public function removeLockbox($id)
     {
         if (!empty($this->locks[$id])) {
             unset($this->locks[$id]);
             return true;
         }
+
         return false;
     }
 
-    /*
-    =====================
-    ListLockboxes
-
-    Returns an array containing a list of all locks present on the secret.
-    =====================
-    */
+    /**
+     * ListLockboxes
+     *
+     * Returns an array containing a list of all locks present on the secret.
+     *
+     * @return array
+     */
     public function listLockboxes()
     {
         return array_keys($this->locks);
     }
 
-    /*
-    =====================
-    HasLockbox
-
-    Returns `true` if the given lock is present on the secret, otherwise
-    `false`.
-    =====================
-    */
+    /**
+     * HasLockbox
+     *
+     * Returns `true` if the given lock is present on the secret, otherwise
+     * `false`.
+     *
+     * @param $id
+     *
+     * @return bool
+     */
     public function hasLockbox($id)
     {
         return !empty($this->locks[$id]);
     }
 
-    /*
-    =====================
-    Export
-
-    Returns a string containing a "safe" representation of the secret and any
-    attached lockboxes.
-    =====================
-    */
+    /**
+     * Export
+     *
+     * Returns a string containing a "safe" representation of the secret and any
+     * attached lockboxes.
+     *
+     * @return string
+     */
     public function export()
     {
         return json_encode([
@@ -226,27 +246,30 @@ class Secret
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
-    /*
-    =====================
-    Import (static)
-
-    Returns a secret built from the given (previously exported) string.
-    Returns `false` if the data cannot be imported.
-    =====================
-    */
+    /**
+     * Import (static)
+     *
+     * Returns a secret built from the given (previously exported) string.
+     * Returns `false` if the data cannot be imported.
+     *
+     * @param $data
+     *
+     * @return Secret
+     */
     public static function import($data)
     {
         $data = json_decode($data);
         return new Secret(null, $_import = $data);
     }
 
-    /*
-    =====================
-    __construct
-
-    Builds a new secret from a value.
-    =====================
-    */
+    /**
+     * Secret constructor.
+     *
+     * Builds a new secret from a value.
+     *
+     * @param      $value
+     * @param null $_import
+     */
     public function __construct($value, $_import = null)
     {
         if ($_import) {

@@ -1,32 +1,32 @@
-<?php /* Copyright (C) 2017 David O'Riva. MIT License.
-       * Original at: https://github.com/starekrow/lockbox
-       ********************************************************/
+<?php
+/**
+ * Copyright (C) 2017 David O'Riva. MIT License.
+ * Original at: https://github.com/starekrow/lockbox
+ */
 
 namespace starekrow\Lockbox;
 
 use Exception;
 
-/*
-================================================================================
-Vault - Manage a storehouse of secret values
-
-Given a directory, manages a set of secret values and master keys. The 
-following operations are supported:
-
-  * Put - Saves a secret value
-  * Get - Loads a secret value
-  * Has - Checks for the existence of a secret value
-  * Remove - Removes a secret value
-  * TODO: RotateMasterKey - Replace the master key with a new one
-  * ChangePassphrase - Re-encode the vault's master key with a new passphrase
-  * Open - Opens the vault
-  * Close - Closes the vault
-  * CreateVault - Creates a new vault
-  * DestroyVault - Erases the vault. Optionally scrubs files.
-  * VaultExists - Checks for the existence of the vault
-
-================================================================================
-*/
+/**
+ * Vault - Manage a storehouse of secret values
+ *
+ * Given a directory, manages a set of secret values and master keys. The
+ * following operations are supported:
+ * Put - Saves a secret value
+ * Get - Loads a secret value
+ * Has - Checks for the existence of a secret value
+ * Remove - Removes a secret value
+ * TODO: RotateMasterKey - Replace the master key with a new one
+ * ChangePassphrase - Re-encode the vault's master key with a new passphrase
+ * Open - Opens the vault
+ * Close - Closes the vault
+ * CreateVault - Creates a new vault
+ * DestroyVault - Erases the vault. Optionally scrubs files.
+ * VaultExists - Checks for the existence of the vault
+ *
+ * @package starekrow\Lockbox
+ */
 class Vault
 {
     public $path;
@@ -34,11 +34,11 @@ class Vault
     protected $dataKeys;
     protected $secrets;
 
-    /*
-    =====================
-    LoadDataKeys
-    =====================
-    */
+    /**
+     * @param $masterKey
+     *
+     * @return bool
+     */
     protected function loadDataKeys($masterKey)
     {
         $mks = @file_get_contents("$this->path/master.keys");
@@ -61,14 +61,15 @@ class Vault
                 $this->dataKeys[$id] = CryptoKey::import($key);
             }
         }
+
         return true;
     }
 
-    /*
-    =====================
-    SaveDataKeys
-    =====================
-    */
+    /**
+     * @param $masterKey
+     *
+     * @return bool
+     */
     protected function saveDataKeys($masterKey)
     {
         $kl = [];
@@ -82,17 +83,15 @@ class Vault
         return true;
     }
 
-    /*
-    =====================
-    PerSecret
-
-    Execute a function for each secret in the vault.
-    =====================
-    */
+    /**
+     * Execute a function for each secret in the vault.
+     *
+     * @param $callback
+     */
     public function perSecret($callback)
     {
         $d = opendir($this->path);
-        while ($d && ($fn = readdir($d)) !== FALSE) {
+        while ($d && ($fn = readdir($d)) !== false) {
             if (substr($fn, -5) == ".data") {
                 $callback(substr($fn, 0, strlen($fn) - 5));
             }
@@ -101,11 +100,11 @@ class Vault
     }
 
 
-    /*
-    =====================
-    Get
-    =====================
-    */
+    /**
+     * @param $name
+     *
+     * @return bool
+     */
     public function get($name)
     {
         if (empty($this->secrets[$name])) {
@@ -128,24 +127,26 @@ class Vault
                 break;
             }
         }
+
         return $s->locked ? false : $s->read();
     }
 
-    /*
-    =====================
-    Has
-    =====================
-    */
+    /**
+     * @param $name
+     *
+     * @return bool
+     */
     public function has($name)
     {
         return file_exists("$this->path/$name.data");
     }
 
-    /*
-    =====================
-    Put
-    =====================
-    */
+    /**
+     * @param $name
+     * @param $value
+     *
+     * @return bool
+     */
     public function put($name, $value)
     {
         if (!$this->activeDataKey) {
@@ -161,28 +162,26 @@ class Vault
             $this->secrets[$name] = new Secret($value);
         }
         $this->secrets[$name]->addLockbox(
-            $this->dataKeys[$this->activeDataKey]);
+            $this->dataKeys[$this->activeDataKey]
+        );
         $kd = $this->secrets[$name]->export();
         file_put_contents("$this->path/$name.data", $kd);
         return true;
     }
 
-    /*
-    =====================
-    Remove
-    =====================
-    */
+    /**
+     * @param $name
+     */
     public function remove($name)
     {
         unset($this->secrets[$name]);
         $this->destroyFile("$name.data", true);
     }
 
-    /*
-    =====================
-    DestroyFile
-    =====================
-    */
+    /**
+     * @param $name
+     * @param $scrub
+     */
     protected function destroyFile($name, $scrub)
     {
         $fn = $this->path . "/" . $name;
@@ -203,49 +202,49 @@ class Vault
     }
 
 
-    /*
-    =====================
-    RotateMasterKey
-
-    Process is intended to eliminate possibility of catastrophic data loss
-    (but see WARNING below). Currently, the process is only protected against
-    interruption (e.g. power loss, accidentally hitting ^C, etc). You should
-    not write to the vault at all while the rotation is taking place, and all
-    processes should reload the vault after rotation.
-
-    All secrets are flushed from the Vault cache.
-
-    This is the process followed:
-      * Add new data key to master key set
-      * Cycle through all secrets, unlocking with existing data key and
-        then adding lockbox for new data key.
-      * Remove old data key from key store
-      * Any interruption of the process will leave the key store and secrets
-        in a recoverable state.
-      * If there are multiple data keys when the process starts, all existing
-        keys are tried for unlocking the secrets and then retired at the end.
-
-    ## WARNING:
-
-    > Currently, *you* are responsible for ensuring that this is the only
-    process using this vault when you rotate the master key. Consider the
-    following sequence of events:
-
-    >		A opens vault
-    >		A reads secret S1 from vault
-    >		B opens vault and begins key rotation
-    >		B completes key rotation
-    >		A writes new secret S2 to vault
-    >		A updates secret S1 in vault
-    >		B updates secret S3 in vault
-    >		A reads secret S3 from vault
-
-    > At this point, S1 and S2 are essentially destroyed because they are using
-    a master key that doesn't exist on disk anymore. And A has failed to
-    decrypt S3.
-
-    =====================
-    */
+    /**
+     * Process is intended to eliminate possibility of catastrophic data loss
+     * (but see WARNING below). Currently, the process is only protected against
+     * interruption (e.g. power loss, accidentally hitting ^C, etc). You should
+     * not write to the vault at all while the rotation is taking place, and all
+     * processes should reload the vault after rotation.
+     *
+     * All secrets are flushed from the Vault cache.
+     *
+     * This is the process followed:
+     * Add new data key to master key set
+     * Cycle through all secrets, unlocking with existing data key and
+     * then adding lockbox for new data key.
+     * Remove old data key from key store
+     * Any interruption of the process will leave the key store and secrets
+     * in a recoverable state.
+     * If there are multiple data keys when the process starts, all existing
+     * keys are tried for unlocking the secrets and then retired at the end.
+     *
+     * ## WARNING:
+     *
+     * > Currently, *you* are responsible for ensuring that this is the only
+     * process using this vault when you rotate the master key. Consider the
+     * following sequence of events:
+     *
+     *  * A opens vault
+     *  * A reads secret S1 from vault
+     *  * B opens vault and begins key rotation
+     *  * B completes key rotation
+     *  * A writes new secret S2 to vault
+     *  * A updates secret S1 in vault
+     *  * B updates secret S3 in vault
+     *  * A reads secret S3 from vault
+     *
+     * > At this point, S1 and S2 are essentially destroyed because they are using
+     * a master key that doesn't exist on disk anymore. And A has failed to
+     * decrypt S3.
+     *
+     * @param $passphrase
+     *
+     * @return bool
+     * @throws \Exception
+     */
     public function rotateMasterKey($passphrase)
     {
         if (!$this->activeDataKey) {
@@ -308,14 +307,14 @@ class Vault
         $mk->shred();
     }
 
-    /*
-    =====================
-    ChangePassphrase
-
-    Changes the passphrase for the current active master key. The vault must
-    already be unlocked for this to succeed.
-    =====================
-    */
+    /**
+     * Changes the passphrase for the current active master key. The vault must
+     * already be unlocked for this to succeed.
+     *
+     * @param $passphrase
+     *
+     * @return bool
+     */
     public function changePassphrase($passphrase)
     {
         if (!$this->activeDataKey) {
@@ -326,19 +325,16 @@ class Vault
         return true;
     }
 
-    /*
-    =====================
-    DestroyVault
-
-    Destroys the vault. There are three supported styles:
-
-    * `fast` - just deletes the file containing the master key
-    * `key` - overwrite the master key with random data, then delete it.
-    * `complete` - overwrite all files with random data, then delete them.
-
-    If no style is given, it defaults to `complete`.
-    =====================
-    */
+    /**
+     * Destroys the vault. There are three supported styles:
+     * `fast` - just deletes the file containing the master key
+     * `key` - overwrite the master key with random data, then delete it.
+     * `complete` - overwrite all files with random data, then delete them.
+     *
+     * If no style is given, it defaults to `complete`.
+     *
+     * @param $style
+     */
     public function destroyVault($style = null)
     {
         $scrub = true;
@@ -346,7 +342,7 @@ class Vault
         switch ($style) {
             case "fast":
                 $scrub = false;
-            case "key":
+                // no breakcase "key":
                 $this->destroyFile("master.keys", $scrub);
                 break;
 
@@ -359,17 +355,17 @@ class Vault
         }
     }
 
-    /*
-    =====================
-    CreateVault
-
-    Creates a new vault with a fresh master key. This will fail if the vault
-    already exists.
-
-    If the vault directory doesn't exist, it will be created with privileges
-    restricting access to the current user.
-    =====================
-    */
+    /**
+     * Creates a new vault with a fresh master key. This will fail if the vault
+     * already exists.
+     *
+     * If the vault directory doesn't exist, it will be created with privileges
+     * restricting access to the current user.
+     *
+     * @param $passphrase
+     *
+     * @return bool
+     */
     public function createVault($passphrase)
     {
         if (file_exists("$this->path/master.keys")) {
@@ -390,23 +386,21 @@ class Vault
         return $this->saveDataKeys($mk);
     }
 
-    /*
-    =====================
-    VaultExists
-    =====================
-    */
+    /**
+     * @return bool
+     */
     public function vaultExists()
     {
         return file_exists("$this->path/master.keys");
     }
 
-    /*
-    =====================
-    Open
-
-    Opens the vault using the given master passphrase.
-    =====================
-    */
+    /**
+     * Opens the vault using the given master passphrase.
+     *
+     * @param $passphrase
+     *
+     * @return bool
+     */
     public function open($passphrase)
     {
         $mk = new CryptoKey($passphrase, "master");
@@ -414,16 +408,13 @@ class Vault
         if ($did) {
             return true;
         }
+
         return false;
     }
 
-    /*
-    =====================
-    Close
-
-    Closes the vault and forgets all keys and secrets.
-    =====================
-    */
+    /**
+     * Closes the vault and forgets all keys and secrets.
+     */
     public function close()
     {
         $this->activeDataKey = null;
@@ -431,15 +422,15 @@ class Vault
         $this->secrets = [];
     }
 
-    /*
-    =====================
-    __construct
-
-    Sets up a Vault instance to operate at the given location. This does
-    not actually create or open any files. Use Open() or Reset() as appropriate
-    to start using the vault.
-    =====================
-    */
+    /**
+     * Vault constructor.
+     *
+     *Sets up a Vault instance to operate at the given location. This does
+     *not actually create or open any files. Use Open() or Reset() as appropriate
+     *to start using the vault.
+     *
+     * @param $path
+     */
     public function __construct($path)
     {
         $this->path = $path;
