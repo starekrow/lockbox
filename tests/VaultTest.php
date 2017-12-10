@@ -11,7 +11,7 @@ class VaultTest extends TestCase
 
     public function setUp()
     {
-        $this->dir = __DIR__.'/testvault';
+        $this->dir = __DIR__ . '/testvault';
     }
 
     public function testConstruct()
@@ -25,7 +25,7 @@ class VaultTest extends TestCase
     {
         $vault = new Vault($this->dir);
 
-        $this->assertFalse($vault->Open('test'));
+        $this->assertFalse($vault->open('test'));
     }
 
     public function testCreate()
@@ -34,7 +34,7 @@ class VaultTest extends TestCase
 
         $vault = new Vault($this->dir);
 
-        $this->assertTrue($vault->CreateVault('test'), 'failed to create');
+        $this->assertTrue($vault->createVault('test'), 'failed to create');
 
         $this->assertDirectoryExists($this->dir, 'no vault after create');
     }
@@ -50,91 +50,91 @@ class VaultTest extends TestCase
     public function testOpen()
     {
         $vault = new Vault($this->dir);
-        $vault->CreateVault('blah');
+        $vault->createVault('blah');
 
         $vault2 = new Vault($this->dir);
 
-        $this->assertTrue($vault2->Open('blah'));
+        $this->assertTrue($vault2->open('blah'));
 
-        $vault2->DestroyVault();
+        $vault2->destroyVault();
     }
 
     public function testClose()
     {
         $vault = new Vault($this->dir);
-        $vault->CreateVault('blah');
-        $vault->Close();
+        $vault->createVault('blah');
+        $vault->close();
 
         $vault2 = new Vault($this->dir);
 
-        $this->assertTrue($vault2->Open('blah'));
+        $this->assertTrue($vault2->open('blah'));
 
-        $vault2->DestroyVault();
+        $vault2->destroyVault();
     }
 
     public function testPutAndGet()
     {
         $vault = new Vault($this->dir);
-        $vault->CreateVault('foobar');
-        $vault->Put('test1', 'This is a test.');
-        $got = $vault->Get('test1');
+        $vault->createVault('foobar');
+        $vault->put('test1', 'This is a test.');
+        $got = $vault->get('test1');
 
         $this->assertEquals('This is a test.', $got, 'original vault');
 
         $vault->Close();
 
         $vault2 = new Vault($this->dir);
-        $vault2->Open('foobar');
-        $got = $vault2->Get('test1');
+        $vault2->open('foobar');
+        $got = $vault2->get('test1');
 
         $this->assertEquals('This is a test.', $got, 'after re-open');
 
-        $vault2->DestroyVault();
+        $vault2->destroyVault();
     }
 
     public function testChangePassword()
     {
         $vault = new Vault($this->dir);
-        $vault->CreateVault('foobar');
-        $vault->Put('test1', 'This is a test.');
-        $vault->Close();
+        $vault->createVault('foobar');
+        $vault->put('test1', 'This is a test.');
+        $vault->close();
 
         $vault2 = new Vault($this->dir);
 
-        $this->assertFalse($vault2->Open('other'), 'Opened with wrong passphrase');
-        $this->assertTrue($vault2->Open('foobar'), 'Could not re-open');
+        $this->assertFalse($vault2->open('other'), 'Opened with wrong passphrase');
+        $this->assertTrue($vault2->open('foobar'), 'Could not re-open');
 
-        $vault2->ChangePassphrase('gobbledy');
-        $vault2->Put('test2', 'Another test');
-        $vault2->Close();
+        $vault2->changePassphrase('gobbledy');
+        $vault2->put('test2', 'Another test');
+        $vault2->close();
 
         $v3 = new Vault($this->dir);
-        $this->assertTrue($v3->Open('gobbledy'), 'open after key change');
-        $this->assertEquals('This is a test.', $v3->Get('test1'), 'val1');
-        $this->assertEquals('Another test', $v3->Get('test2'), 'val2');
-        $v3->DestroyVault();
+        $this->assertTrue($v3->open('gobbledy'), 'open after key change');
+        $this->assertEquals('This is a test.', $v3->get('test1'), 'val1');
+        $this->assertEquals('Another test', $v3->get('test2'), 'val2');
+        $v3->destroyVault();
     }
 
     public function testRotateMasterKey()
     {
         $vault = new Vault($this->dir);
-        $vault->CreateVault('foobar');
-        $vault->Put('test1', 'This is a test.');
-        $vault->Close();
+        $vault->createVault('foobar');
+        $vault->put('test1', 'This is a test.');
+        $vault->close();
 
         $vault2 = new Vault($this->dir);
-        $this->assertTrue($vault2->Open('foobar'), 'Could not re-open');
+        $this->assertTrue($vault2->open('foobar'), 'Could not re-open');
 
-        $vault2->RotateMasterKey('foobar');
-        $vault2->Put('test2', 'Another test');
-        $vault2->Close();
+        $vault2->rotateMasterKey('foobar');
+        $vault2->put('test2', 'Another test');
+        $vault2->close();
 
         $v3 = new Vault($this->dir);
 
-        $this->assertTrue($v3->Open('foobar'), 'open after key rotate');
-        $this->assertEquals('This is a test.', $v3->Get('test1'), 'val1');
-        $this->assertEquals('Another test', $v3->Get('test2'), 'val2');
+        $this->assertTrue($v3->open('foobar'), 'open after key rotate');
+        $this->assertEquals('This is a test.', $v3->get('test1'), 'val1');
+        $this->assertEquals('Another test', $v3->get('test2'), 'val2');
 
-        $v3->DestroyVault();
+        $v3->destroyVault();
     }
 }
