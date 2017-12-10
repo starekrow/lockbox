@@ -1,3 +1,5 @@
+![build status](https://travis-ci.org/starekrow/lockbox.svg?branch=master)
+
 # Lockbox
 
 Lockbox is a simple, tiered system for working with cryptographic keys and 
