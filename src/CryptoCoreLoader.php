@@ -63,6 +63,11 @@ class CryptoCoreLoader
         Crypto::init();
         return Crypto::keylen( $alg );
     }
+    public function hashlen( $alg )
+    {
+        Crypto::init();
+        return Crypto::hashlen( $alg );
+    }
     public function algolist()
     {
         Crypto::init();

@@ -22,5 +22,6 @@ interface CryptoCore
     function random( $count );
     function ivlen( $alg );
     function keylen( $alg );
+    function hashlen( $alg );
     function algolist();
 }

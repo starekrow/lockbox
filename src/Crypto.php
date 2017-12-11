@@ -78,9 +78,13 @@ class Crypto
     {
         return self::$impl->keylen( $alg );
     }
-    public static function algolist( $alg )
+    public static function hashlen( $alg )
     {
-        return self::$impl->algolist( $alg );
+        return self::$impl->hashlen( $alg );
+    }
+    public static function algolist()
+    {
+        return self::$impl->algolist();
     }
 }
 
