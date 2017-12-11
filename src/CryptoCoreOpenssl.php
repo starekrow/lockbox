@@ -41,7 +41,7 @@ class CryptoCoreOpenssl
     }
     public function algolist()
     {
-        $got = $parent->algolist();
+        $got = parent::algolist();
         $got[ 'cipher' ] = openssl_get_cipher_methods();
         return $got;
     }
