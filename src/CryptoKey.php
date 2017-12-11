@@ -89,12 +89,8 @@ class CryptoKey
         $plaintext = Crypto::decrypt( $this->cipher, $this->data, 
             $iv, $ciphertext_raw );
         $calcmac = Crypto::hmac('sha256', $this->data, $ciphertext_raw);
-        $res = 0;
-
-        for ($i = 0; $i < strlen($hmac); ++$i) {
-            $res |= (($hmac[$i] != $calcmac[$i]) ? 1 : 0);
-        }
-        return $res ? false : $plaintext;
+        $diff = Crypto::hashdiff( $hmac, $calcmac );
+        return $diff ? false : $plaintext;
     }
 
     /**

@@ -34,12 +34,17 @@ class Crypto
             }
         }
         $cls = "starekrow\\Lockbox\\CryptoCore" . ucwords( $provider );
+        if (!class_exists( $cls )) {
+            self::$impl = new CryptoCoreFailed();
+            return false;
+        }
         try {
             self::$impl = new $cls;
         } catch (\Exception $e) {
             self::$impl = new CryptoCoreFailed();
             return false;
         }
+        return true;
     }
 
     public static function hash( $alg, $data )
@@ -62,9 +67,9 @@ class Crypto
     {
         return self::$impl->decrypt( $alg, $key, $iv, $data );
     }
-    public static function hashcmp( $h1, $h2 )
+    public static function hashdiff( $h1, $h2 )
     {
-        return self::$impl->hashcmp( $h1, $h2 );
+        return self::$impl->hashdiff( $h1, $h2 );
     }
     public static function random( $count )
     {

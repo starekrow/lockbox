@@ -43,10 +43,10 @@ class CryptoCoreLoader
         Crypto::init();
         return Crypto::decrypt( $alg, $key, $iv, $data );
     }
-    public function hashcmp( $h1, $h2 )
+    public function hashdiff( $h1, $h2 )
     {
         Crypto::init();
-        return Crypto::hashcmp( $h1, $h2 );
+        return Crypto::hashdiff( $h1, $h2 );
     }
     public function random( $count )
     {

@@ -18,7 +18,7 @@ interface CryptoCore
     function hkdf( $alg, $ikm, $len, $salt = "", $info = "" );
     function encrypt( $alg, $key, $iv, $data );
     function decrypt( $alg, $key, $iv, $data );
-    function hashcmp( $h1, $h2 );
+    function hashdiff( $h1, $h2 );
     function random( $count );
     function ivlen( $alg );
     function keylen( $alg );

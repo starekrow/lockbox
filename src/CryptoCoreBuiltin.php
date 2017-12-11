@@ -32,7 +32,7 @@ class CryptoCoreBuiltin
     }
     public function hkdf( $alg, $ikm, $len, $salt = "", $info = "" )
     {
-        if (is_function("hash_hkdf")) {
+        if (function_exists("hash_hkdf")) {
             return hash_hkdf($alg, $ikm, $len, $info, $salt);
         }
         $prk = hash_hmac($alg, $ikm, $salt, true);
@@ -52,10 +52,10 @@ class CryptoCoreBuiltin
     {
         throw new Exception( "No usable decryptor" );
     }
-    public function hashcmp( $h1, $h2 )
+    public function hashdiff( $h1, $h2 )
     {
-        if (is_function("hash_equals")) {
-            return hash_equals($h1, $h2);
+        if (function_exists("hash_equals")) {
+            return !hash_equals($h1, $h2);
         }
         if (strlen($h1) != strlen($h2)) {
             return false;
@@ -65,7 +65,7 @@ class CryptoCoreBuiltin
         for ($i = strlen($x) - 1; $i >= 0; $i--) {
             $ret |= ord($x[$i]);
         }
-        return !$ret;
+        return !!$ret;
     }
     public function random( $count )
     {

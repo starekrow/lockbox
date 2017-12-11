@@ -37,7 +37,7 @@ class CryptoCoreFailed
     {
         throw new Exception( "No usable crypto core" );
     }
-    public function hashcmp( $h1, $h2 )
+    public function hashdiff( $h1, $h2 )
     {
         throw new Exception( "No usable crypto core" );
     }
