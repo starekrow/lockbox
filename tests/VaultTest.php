@@ -36,7 +36,7 @@ class VaultTest extends TestCase
 
         $this->assertTrue($vault->createVault('test'), 'failed to create');
 
-        $this->assertDirectoryExists($this->dir, 'no vault after create');
+        $this->assertTrue(is_dir($this->dir), 'no vault after create');
     }
 
     public function testDestroy()
@@ -44,7 +44,7 @@ class VaultTest extends TestCase
         $vault = new Vault($this->dir);
         $vault->DestroyVault();
 
-        $this->assertDirectoryNotExists($this->dir);
+        $this->assertFalse(is_dir($this->dir));
     }
 
     public function testOpen()
