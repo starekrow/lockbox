@@ -196,7 +196,7 @@ class Vault
             return;
         }
         fseek($f, 0, SEEK_SET);
-        fwrite($f, openssl_random_pseudo_bytes($s));
+        fwrite($f, Crypto::random($s));
         fclose($f);
         unlink($fn);
     }
