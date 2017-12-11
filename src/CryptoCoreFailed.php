@@ -53,6 +53,10 @@ class CryptoCoreFailed
     {
         throw new Exception( "No usable crypto core" );
     }
+    public function hashlen( $alg )
+    {
+        throw new Exception( "No usable crypto core" );
+    }
     public function algolist()
     {
         throw new Exception( "No usable crypto core" );
