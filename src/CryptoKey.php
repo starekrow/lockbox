@@ -38,65 +38,10 @@ class CryptoKey
      */
     public static function randomGuid()
     {
-        $data = openssl_random_pseudo_bytes(16);
+        $data = Crypto::random(16);
         $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // set version to 0100
         $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // set bits 6-7 to 10
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-    }
-
-    /**
-     * HashEquals (static) - Compare hashes in contant time
-     *
-     * @param $h1
-     * @param $h2
-     *
-     * @return bool
-     */
-    public static function hashEquals($h1, $h2)
-    {
-        if (is_function("hash_equals")) {
-            return hash_equals($h1, $h2);
-        }
-        if (strlen($h1) != strlen($h2)) {
-            return false;
-        } else {
-            $res = $h1 ^ $h2;
-            $ret = 0;
-            for ($i = strlen($res) - 1; $i >= 0; $i--) {
-                $ret |= ord($res[$i]);
-            }
-
-            return !$ret;
-        }
-    }
-
-    /**
-     * HashHKDF (static) - Compute HKDF
-     *
-     * Only a few hash functions are required for our purposes.
-     *
-     * @param        $alg
-     * @param        $ikm
-     * @param null $length
-     * @param string $info
-     * @param string $salt
-     *
-     * @return bool|string
-     */
-    public static function hashHkdf($alg, $ikm, $length = null, $info = "", $salt = "")
-    {
-        if (is_function("hash_hkdf")) {
-            return hash_hkdf($alg, $ikm, $length, $info, $salt);
-        }
-        $prk = hash_hmac($alg, $ikm, $salt, true);
-        $okm = "";
-        $t = "";
-        for ($i = 1; strlen($okm) < $length; $i++) {
-            $t = hash_hmac($alg, $t . $info . chr($i), $prk, true);
-            $okm .= $t;
-        }
-
-        return substr($okm, 0, $length);
     }
 
     /**
@@ -114,13 +59,11 @@ class CryptoKey
         if (!$this->data) {
             return false;
         }
-        $options = OPENSSL_RAW_DATA;
-        $ivlen = openssl_cipher_iv_length($this->cipher);
-        $iv = openssl_random_pseudo_bytes($ivlen);
-        $ciphertext_raw = openssl_encrypt($message, $this->cipher, $this->data,
-            $options, $iv);
-        $hmac = hash_hmac('sha256', $ciphertext_raw, $this->data,
-            $as_binary = true);
+        $ivlen = Crypto::ivlen( $this->cipher );
+        $iv = Crypto::random( $ivlen );
+        $ciphertext_raw = Crypto::encrypt($this->cipher, $this->data, $iv, 
+            $message);
+        $hmac = Crypto::hmac('sha256', $this->data, $ciphertext_raw );
         $ciphertext = base64_encode($iv . $hmac . $ciphertext_raw);
         return $ciphertext;
     }
@@ -138,16 +81,14 @@ class CryptoKey
     public function unlock($ciphertext)
     {
         $sha2len = 32;
-        $options = OPENSSL_RAW_DATA;
-        $ivlen = openssl_cipher_iv_length($this->cipher);
+        $ivlen = Crypto::ivlen($this->cipher);
         $c = base64_decode($ciphertext);
         $iv = substr($c, 0, $ivlen);
         $hmac = substr($c, $ivlen, $sha2len);
         $ciphertext_raw = substr($c, $ivlen + $sha2len);
-        $plaintext = openssl_decrypt($ciphertext_raw,
-            $this->cipher, $this->data, $options, $iv);
-        $calcmac = hash_hmac('sha256', $ciphertext_raw, $this->data,
-            $as_binary = true);
+        $plaintext = Crypto::decrypt( $this->cipher, $this->data, 
+            $iv, $ciphertext_raw );
+        $calcmac = Crypto::hmac('sha256', $this->data, $ciphertext_raw);
         $res = 0;
 
         for ($i = 0; $i < strlen($hmac); ++$i) {
@@ -235,7 +176,7 @@ class CryptoKey
     {
         $this->data = $data;
         if (!$data) {
-            $this->data = openssl_random_pseudo_bytes(32);
+            $this->data = Crypto::random(32);
         }
         if ($id !== null) {
             $this->id = $id;
