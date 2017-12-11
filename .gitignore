@@ -2,3 +2,4 @@
 *.sublime-workspace
 vendor
 composer.lock
+.idea

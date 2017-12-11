@@ -24,7 +24,7 @@ class CryptoKeyTest extends TestCase
     public function testExport()
     {
         $cryptoKey = new CryptoKey('foobar', 'test');
-        $result = $cryptoKey->Export();
+        $result = $cryptoKey->export();
 
         $this->assertEquals('k0|test|QUVTLTEyOC1DQkM=|Zm9vYmFy', $result);
     }
@@ -32,7 +32,7 @@ class CryptoKeyTest extends TestCase
     public function testImport()
     {
         $kt = 'k0|test|QUVTLTEyOC1DQkM=|Zm9vYmFy';
-        $cryptoKey = CryptoKey::Import($kt);
+        $cryptoKey = CryptoKey::import($kt);
 
         $this->assertInstanceOf(CryptoKey::class, $cryptoKey, 'import failure');
         $this->assertEquals('test', $cryptoKey->id, 'id mismatch');
@@ -42,12 +42,12 @@ class CryptoKeyTest extends TestCase
     {
         $cryptoKey = new CryptoKey();
         $msg = 'Hello, Dave.';
-        $ciphertext = $cryptoKey->Lock($msg);
+        $ciphertext = $cryptoKey->lock($msg);
 
         $this->assertInternalType('string', $ciphertext, 'Encryption failed');
         $this->assertNotEquals($msg, $ciphertext, 'Encryption returned plaintext');
 
-        $dec = $cryptoKey->Unlock($ciphertext);
+        $dec = $cryptoKey->unlock($ciphertext);
 
         $this->assertEquals($msg, $dec);
     }
