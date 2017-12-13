@@ -240,18 +240,20 @@ class Vault
      * a master key that doesn't exist on disk anymore. And A has failed to
      * decrypt S3.
      *
-     * @param $passphrase
+     * @param string $passphrase
+     * @param string $salt optional salt value (a non-secret random value).
+     *     Adding salt improves security, but will need to be store to unlock vault
      *
      * @return bool
      * @throws \Exception
      */
-    public function rotateMasterKey($passphrase)
+    public function rotateMasterKey($passphrase, $salt = '')
     {
         if (!$this->activeDataKey) {
             return false;
         }
         $this->close();
-        $mk = new CryptoKey($passphrase, "master");
+        $mk = new CryptoKey($passphrase, "master", null, null, $salt);
         $this->loadDataKeys($mk);
 
         $ndk = new CryptoKey();
@@ -312,15 +314,17 @@ class Vault
      * already be unlocked for this to succeed.
      *
      * @param $passphrase
+     * @param string $salt optional salt value (a non-secret random value).
+     *     Adding salt improves security, but will need to be store to unlock vault
      *
      * @return bool
      */
-    public function changePassphrase($passphrase)
+    public function changePassphrase($passphrase, $salt = '')
     {
         if (!$this->activeDataKey) {
             return false;
         }
-        $mk = new CryptoKey($passphrase, "master");
+        $mk = new CryptoKey($passphrase, "master", null, null, $salt);
         $this->saveDataKeys($mk);
         return true;
     }
@@ -362,11 +366,13 @@ class Vault
      * If the vault directory doesn't exist, it will be created with privileges
      * restricting access to the current user.
      *
-     * @param $passphrase
+     * @param string $passphrase
+     * @param string $salt optional salt value (a non-secret random value).
+     *     Adding salt improves security, but will need to be store to unlock vault
      *
      * @return bool
      */
-    public function createVault($passphrase)
+    public function createVault($passphrase, $salt = '')
     {
         if (file_exists("$this->path/master.keys")) {
             return false;
@@ -378,7 +384,7 @@ class Vault
         $this->activeDataKey = $dk->id;
         $this->secrets = [];
 
-        $mk = new CryptoKey($passphrase, "master");
+        $mk = new CryptoKey($passphrase, "master", null, null, $salt);
 
         if (!is_dir($this->path)) {
             @mkdir($this->path, 0700, true);
@@ -397,13 +403,14 @@ class Vault
     /**
      * Opens the vault using the given master passphrase.
      *
-     * @param $passphrase
+     * @param string $passphrase
+     * @param string $salt optional salt value (a non-secret random value)
      *
      * @return bool
      */
-    public function open($passphrase)
+    public function open($passphrase, $salt = '')
     {
-        $mk = new CryptoKey($passphrase, "master");
+        $mk = new CryptoKey($passphrase, "master", null, null, $salt);
         $did = $this->loadDataKeys($mk);
         if ($did) {
             return true;
