@@ -24,7 +24,20 @@ so-called "site owner's" control.
 ### Manual Install
 
 Grab all the files from the `src/` directory here and stick them somewhere.
-Require, or arrange to autoload them.
+Arrange to autoload them. If you instead want to require() them, this is the 
+block you'll need:
+
+```php
+require_once "CryptoCore.php";
+require_once "CryptoCoreLoader.php";
+require_once "CryptoCoreFailed.php";
+require_once "CryptoCoreBuiltin.php";
+require_once "CryptoCoreOpenssl.php";
+require_once "Crypto.php";
+require_once "CryptoKey.php";
+require_once "Secret.php";
+require_once "Vault.php";
+```
 
 ### Composer Install
 
@@ -145,6 +158,8 @@ Each tier of the interface adds capabilities:
     handling.
   * A `Vault` is file-based storage for secrets, with a master key and some
     additional key management tools.
+  * `Crypto` is a low-level interface that provides hashing and encryption of 
+    raw data. 
 
 ### CryptoKey
 
@@ -237,6 +252,16 @@ Manage values within the vault with `Put()`, `Get()`, `Has()`, `Remove()` and
 You can change the passphrase used to encrypt the master key with 
 `ChangePassphrase()`. This is a comparatively fast and safe operation, affecting
 only one file. Rotate the master key itself with `RotateMasterKey()`.
+
+### Crypto
+
+`Crypto` is a low-level encryption interface. It is designed as a
+straightforward compatibility layer, to hide some of the differences between 
+the various available cryptography extensions (and PHP versions) from 
+`CryptoKey`.
+
+You should only use `Crypto` directly if you have a pretty good idea of what
+you're doing. 
 
 ## Exposure Risks
 
