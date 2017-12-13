@@ -25,6 +25,12 @@ class CryptoKey
      * @var null|string
      */
     public $cipher = "AES-128-CBC";
+
+    /**
+     * @var string hmac algorithm to use.
+     */
+    public $mac = 'sha256';
+
     /**
      * binary key data. Not normally accessible.*
      * @var string
@@ -63,7 +69,7 @@ class CryptoKey
         $iv = Crypto::random( $ivlen );
         $ciphertext_raw = Crypto::encrypt($this->cipher, $this->data, $iv, 
             $message);
-        $hmac = Crypto::hmac('sha256', $this->data, $ciphertext_raw );
+        $hmac = Crypto::hmac($this->mac, $this->data, $ciphertext_raw );
         $ciphertext = base64_encode($iv . $hmac . $ciphertext_raw);
         return $ciphertext;
     }
@@ -80,15 +86,15 @@ class CryptoKey
      */
     public function unlock($ciphertext)
     {
-        $sha2len = 32;
+        $maclen = Crypto::hashlen($this->mac);
         $ivlen = Crypto::ivlen($this->cipher);
         $c = base64_decode($ciphertext);
         $iv = substr($c, 0, $ivlen);
-        $hmac = substr($c, $ivlen, $sha2len);
-        $ciphertext_raw = substr($c, $ivlen + $sha2len);
+        $hmac = substr($c, $ivlen, $maclen);
+        $ciphertext_raw = substr($c, $ivlen + $maclen);
         $plaintext = Crypto::decrypt( $this->cipher, $this->data, 
             $iv, $ciphertext_raw );
-        $calcmac = Crypto::hmac('sha256', $this->data, $ciphertext_raw);
+        $calcmac = Crypto::hmac($this->mac, $this->data, $ciphertext_raw);
         $diff = Crypto::hashdiff( $hmac, $calcmac );
         return $diff ? false : $plaintext;
     }
@@ -106,6 +112,7 @@ class CryptoKey
         $this->data = null;
         $this->id = null;
         $this->cipher = null;
+        $this->mac = null;
     }
 
     /**
@@ -121,7 +128,8 @@ class CryptoKey
         $id = $this->id;
         $cp = base64_encode($this->cipher);
         $kd = base64_encode($this->data);
-        return "k0|$id|$cp|$kd";
+        $mac = base64_encode($this->mac);
+        return "k1|$id|$cp|$kd|$mac";
     }
 
     /**
@@ -140,16 +148,27 @@ class CryptoKey
             return false;
         }
         $kp = explode("|", $data);
-        if (count($kp) != 4 || $kp[0] != "k0") {
+        $paramCount = count($kp);
+
+        if ($paramCount === 5 && $kp[0] === 'k1') {
+            $mac = base64_decode($kp[4]);
+            if (!$mac) {
+                return false;
+            }
+        } elseif ($paramCount === 4 && $kp[0] === 'k0') {
+            $mac = null;
+        } else {
             return false;
         }
+
         $dat = base64_decode($kp[3]);
         $id = $kp[1];
+
         if (!$dat) {
             return false;
         }
 
-        return new CryptoKey($dat, $id, base64_decode($kp[2]));
+        return new CryptoKey($dat, $id, base64_decode($kp[2]), $mac);
     }
 
     /**
@@ -167,13 +186,15 @@ class CryptoKey
      * @param null $data
      * @param null $id
      * @param null $cipher
+     * @param string $mac Algorithm to use for hmac (default sha256)
      */
-    public function __construct($data = null, $id = null, $cipher = null)
+    public function __construct($data = null, $id = null, $cipher = null, $mac = null)
     {
         $this->data = $data;
         if (!$data) {
             $this->data = Crypto::random(32);
         }
+
         if ($id !== null) {
             $this->id = $id;
         } else {
@@ -182,6 +203,10 @@ class CryptoKey
 
         if ($cipher) {
             $this->cipher = $cipher;
+        }
+
+        if ($mac) {
+            $this->mac = $mac;
         }
     }
 }
