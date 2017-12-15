@@ -13,15 +13,15 @@ namespace starekrow\Lockbox;
  */
 interface CryptoCore
 {
-    function hash( $alg, $data );
-    function hmac( $alg, $key, $data );
-    function hkdf( $alg, $ikm, $len, $salt = "", $info = "" );
-    function encrypt( $alg, $key, $iv, $data );
-    function decrypt( $alg, $key, $iv, $data );
-    function hashdiff( $h1, $h2 );
-    function random( $count );
-    function ivlen( $alg );
-    function keylen( $alg );
-    function hashlen( $alg );
-    function algolist();
+    public function hash($alg, $data);
+    public function hmac($alg, $key, $data);
+    public function hkdf($alg, $ikm, $len, $salt = "", $info = "");
+    public function encrypt($alg, $key, $iv, $data);
+    public function decrypt($alg, $key, $iv, $data);
+    public function hashdiff($h1, $h2);
+    public function random($count);
+    public function ivlen($alg);
+    public function keylen($alg);
+    public function hashlen($alg);
+    public function algolist();
 }

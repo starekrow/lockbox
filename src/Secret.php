@@ -41,6 +41,28 @@ class Secret
     protected $key;
     protected $ciphertext;
 
+    /**
+     * Secret constructor.
+     *
+     * Builds a new secret from a value.
+     *
+     * @param      $value
+     * @param null $_import
+     */
+    public function __construct($value, $_import = null)
+    {
+        if ($_import) {
+            $this->locks = (array)$_import->locks;
+            $this->ciphertext = $_import->data;
+            $this->locked = true;
+
+            return;
+        }
+        $this->locked = false;
+        $this->locks = [];
+        $this->key = new CryptoKey();
+        $this->update($value);
+    }
 
     /**
      * Unlock - Unlocks the secret
@@ -57,8 +79,8 @@ class Secret
      *
      * @param $key
      *
-     * @return bool
      * @throws Exception if the the fails to load key
+     * @return bool
      */
     public function unlock($key = null)
     {
@@ -82,6 +104,7 @@ class Secret
         }
         $this->key = $ikey;
         $this->locked = false;
+
         return true;
     }
 
@@ -101,6 +124,7 @@ class Secret
         $this->value = null;
         $this->decrypted = false;
         $this->locked = true;
+
         return true;
     }
 
@@ -113,8 +137,8 @@ class Secret
      *
      * @param $value
      *
-     * @return bool
      * @throws Exception if it fails to load key
+     * @return bool
      */
     public function update($value)
     {
@@ -132,6 +156,7 @@ class Secret
             $plaintext = "p" . serialize($value);
         }
         $this->ciphertext = $this->key->lock($plaintext);
+
         return true;
     }
 
@@ -151,17 +176,18 @@ class Secret
             return false;
         }
         $value = $this->key->unlock($this->ciphertext);
-        if ($value === false) {
+        if (false === $value) {
             return false;
         }
-        if ($value[0] == "s") {
+        if ("s" === $value[0]) {
             $this->value = substr($value, 1);
         } else {
-            if ($value[0] == "p") {
+            if ("p" === $value[0]) {
                 $this->value = unserialize(substr($value, 1));
             }
         }
         $this->decrypted = true;
+
         return $this->value;
     }
 
@@ -181,9 +207,9 @@ class Secret
             $key = CryptoKey::import($key);
         }
         $this->locks[$key->id] = $key->lock($this->key->export());
+
         return true;
     }
-
 
     /**
      * RemoveLockbox
@@ -201,6 +227,7 @@ class Secret
     {
         if (!empty($this->locks[$id])) {
             unset($this->locks[$id]);
+
             return true;
         }
 
@@ -263,28 +290,7 @@ class Secret
     public static function import($data)
     {
         $data = json_decode($data);
-        return new Secret(null, $_import = $data);
-    }
 
-    /**
-     * Secret constructor.
-     *
-     * Builds a new secret from a value.
-     *
-     * @param      $value
-     * @param null $_import
-     */
-    public function __construct($value, $_import = null)
-    {
-        if ($_import) {
-            $this->locks = (array)$_import->locks;
-            $this->ciphertext = $_import->data;
-            $this->locked = true;
-            return;
-        }
-        $this->locked = false;
-        $this->locks = [];
-        $this->key = new CryptoKey();
-        $this->update($value);
+        return new Secret(null, $_import = $data);
     }
 }

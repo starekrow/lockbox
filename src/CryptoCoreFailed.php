@@ -5,60 +5,60 @@
  */
 
 namespace starekrow\Lockbox;
+
 use Exception;
 
 /**
  * CryptoCoreFailed - An unusable cryptographic driver
  *
  * This will be used in cases where a required core has failed to initialize.
- * 
+ *
  * @package starekrow\Lockbox
  */
-class CryptoCoreFailed 
-    implements CryptoCore
+class CryptoCoreFailed implements CryptoCore
 {
-    public function hash( $alg, $data )
+    public function hash($alg, $data)
     {
-        throw new Exception( "No usable crypto core" );
+        throw new Exception("No usable crypto core");
     }
-    public function hmac( $alg, $key, $data )
+    public function hmac($alg, $key, $data)
     {
-        throw new Exception( "No usable crypto core" );
+        throw new Exception("No usable crypto core");
     }
-    public function hkdf( $alg, $ikm, $len, $salt = "", $info = "" )
+    public function hkdf($alg, $ikm, $len, $salt = "", $info = "")
     {
-        throw new Exception( "No usable crypto core" );
+        throw new Exception("No usable crypto core");
     }
-    public function encrypt( $alg, $key, $iv, $data )
+    public function encrypt($alg, $key, $iv, $data)
     {
-        throw new Exception( "No usable crypto core" );
+        throw new Exception("No usable crypto core");
     }
-    public function decrypt( $alg, $key, $iv, $data )
+    public function decrypt($alg, $key, $iv, $data)
     {
-        throw new Exception( "No usable crypto core" );
+        throw new Exception("No usable crypto core");
     }
-    public function hashdiff( $h1, $h2 )
+    public function hashdiff($h1, $h2)
     {
-        throw new Exception( "No usable crypto core" );
+        throw new Exception("No usable crypto core");
     }
-    public function random( $count )
+    public function random($count)
     {
-        throw new Exception( "No usable crypto core" );
+        throw new Exception("No usable crypto core");
     }
-    public function ivlen( $alg )
+    public function ivlen($alg)
     {
-        throw new Exception( "No usable crypto core" );
+        throw new Exception("No usable crypto core");
     }
-    public function keylen( $alg )
+    public function keylen($alg)
     {
-        throw new Exception( "No usable crypto core" );
+        throw new Exception("No usable crypto core");
     }
-    public function hashlen( $alg )
+    public function hashlen($alg)
     {
-        throw new Exception( "No usable crypto core" );
+        throw new Exception("No usable crypto core");
     }
     public function algolist()
     {
-        throw new Exception( "No usable crypto core" );
+        throw new Exception("No usable crypto core");
     }
 }

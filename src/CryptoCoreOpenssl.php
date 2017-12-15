@@ -5,49 +5,52 @@
  */
 
 namespace starekrow\Lockbox;
+
 use Exception;
 
 /**
  * CryptoCoreOpenssl - Cryptographic driver using OpenSSL
  *
  * Builds on `CryptoCoreBuiltin` for hashing.
- * 
+ *
  * @package starekrow\Lockbox
  */
-class CryptoCoreOpenssl
-    extends CryptoCoreBuiltin
+class CryptoCoreOpenssl extends CryptoCoreBuiltin
 {
-    public function encrypt( $alg, $key, $iv, $data )
+    public function encrypt($alg, $key, $iv, $data)
     {
         $options = OPENSSL_RAW_DATA;
+
         return openssl_encrypt($data, $alg, $key, $options, $iv);
     }
-    public function decrypt( $alg, $key, $iv, $data )
+    public function decrypt($alg, $key, $iv, $data)
     {
         $options = OPENSSL_RAW_DATA;
+
         return openssl_decrypt($data, $alg, $key, $options, $iv);
     }
-    public function random( $count )
+    public function random($count)
     {
-        return openssl_random_pseudo_bytes( $count );
+        return openssl_random_pseudo_bytes($count);
     }
-    public function ivlen( $alg )
+    public function ivlen($alg)
     {
-        return openssl_cipher_iv_length( $alg );
+        return openssl_cipher_iv_length($alg);
     }
-    public function keylen( $alg )
+    public function keylen($alg)
     {
         $def = explode('-', $alg);
-        if (count($def) === 3 && is_numeric($def[1])) {
+        if (3 === count($def) && is_numeric($def[1])) {
             return $def[1] / 8;
         }
 
-        throw new Exception( "Unknown algorithm" );
+        throw new Exception("Unknown algorithm");
     }
     public function algolist()
     {
         $got = parent::algolist();
         $got[ 'cipher' ] = openssl_get_cipher_methods();
+
         return $got;
     }
 }
