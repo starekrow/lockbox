@@ -15,6 +15,14 @@ use Exception;
  */
 class CryptoKey
 {
+    /**
+     * salt length
+     */
+    const SALT_LENGTH = 32;
+
+    /**
+     * Current key version
+     */
     const CURRENT_KEY_VERSION = 'k1';
 
     /**
@@ -38,18 +46,13 @@ class CryptoKey
     /**
      * @var string key version
      */
-    public $version = self::CURRENT_KEY_VERSION;
+    public $version;
 
     /**
      * binary key data. Not normally accessible.*
      * @var string
      */
     protected $data;
-
-    /**
-     * @var string salt for hkdf.
-     */
-    protected $salt;
 
     /**
      * RandomGUID (static) - Generate a random GUID
@@ -73,19 +76,25 @@ class CryptoKey
      * @param $message
      *
      * @return bool|string
+     * @throws Exception when version doesn't match one of the defined versions
      */
     public function lock($message)
     {
         if (!$this->data) {
             return false;
         }
+
         $ivlen = Crypto::ivlen( $this->cipher );
         $iv = Crypto::random( $ivlen );
-        list($encryptionKey, $hmacKey) = $this->getKeys();
-        $ciphertext_raw = Crypto::encrypt($this->cipher, $encryptionKey, $iv,
-            $message);
+        $salt = Crypto::random(self::SALT_LENGTH);
+
+        list($encryptionKey, $hmacKey) = $this->getKeys($salt);
+
+        $ciphertext_raw = Crypto::encrypt($this->cipher, $encryptionKey, $iv, $message);
+
         $hmac = Crypto::hmac($this->mac, $hmacKey, $ciphertext_raw );
-        $ciphertext = base64_encode($iv . $hmac . $ciphertext_raw);
+        $ciphertext = base64_encode($iv . $hmac . $salt . $ciphertext_raw);
+
         return $ciphertext;
     }
 
@@ -98,20 +107,27 @@ class CryptoKey
      * @param $ciphertext
      *
      * @return bool|string
+     * @throws Exception when the version doesn't match one of the defined versions
      */
     public function unlock($ciphertext)
     {
         $maclen = Crypto::hashlen($this->mac);
         $ivlen = Crypto::ivlen($this->cipher);
+        $saltlen = $this->getNumericVerison() > 0 ? self::SALT_LENGTH : 0;
+
         $c = base64_decode($ciphertext);
+
         $iv = substr($c, 0, $ivlen);
         $hmac = substr($c, $ivlen, $maclen);
-        $ciphertext_raw = substr($c, $ivlen + $maclen);
-        list($encryptionKey, $hmacKey) = $this->getKeys();
-        $plaintext = Crypto::decrypt( $this->cipher, $encryptionKey,
-            $iv, $ciphertext_raw );
+        $salt = $saltlen > 0 ? substr($c, $ivlen + $maclen, $saltlen) : '';
+        $ciphertext_raw = substr($c, $ivlen + $maclen + $saltlen);
+
+        list($encryptionKey, $hmacKey) = $this->getKeys($salt);
+
+        $plaintext = Crypto::decrypt( $this->cipher, $encryptionKey, $iv, $ciphertext_raw );
         $calcmac = Crypto::hmac($this->mac, $hmacKey, $ciphertext_raw);
         $diff = Crypto::hashdiff( $hmac, $calcmac );
+
         return $diff ? false : $plaintext;
     }
 
@@ -129,7 +145,6 @@ class CryptoKey
         $this->id = null;
         $this->cipher = null;
         $this->mac = null;
-        $this->salt = null;
     }
 
     /**
@@ -146,8 +161,7 @@ class CryptoKey
         $cp = base64_encode($this->cipher);
         $kd = base64_encode($this->data);
         $mac = base64_encode($this->mac);
-        $salt = base64_encode($this->salt);
-        return "k1|$id|$cp|$kd|$mac|$salt";
+        return "k1|$id|$cp|$kd|$mac";
     }
 
     /**
@@ -168,15 +182,13 @@ class CryptoKey
         $kp = explode("|", $data);
         $paramCount = count($kp);
 
-        if ($paramCount === 6 && $kp[0] === 'k1') {
+        if ($paramCount === 5 && $kp[0] === 'k1') {
             $mac = base64_decode($kp[4]);
-            $salt = base64_decode($kp[5]);
             if (!$mac) {
                 return false;
             }
         } elseif ($paramCount === 4 && $kp[0] === 'k0') {
             $mac = null;
-            $salt = null;
         } else {
             return false;
         }
@@ -188,16 +200,16 @@ class CryptoKey
             return false;
         }
 
-        return new CryptoKey($dat, $id, base64_decode($kp[2]), $mac, $salt, $kp[0]);
+        return new CryptoKey($dat, $id, base64_decode($kp[2]), $mac, $kp[0]);
     }
 
     /**
      * gets the encryption key and hmac key
-     * @param string $version
+     * @param string $salt
      * @return array [encryption key, hmac key]
      * @throws Exception when the version doesn't match one of the defined versions
      */
-    public function getKeys()
+    public function getKeys($salt = '')
     {
         switch ($this->version) {
             case 'k0':
@@ -206,13 +218,22 @@ class CryptoKey
                 $keylen = Crypto::keylen($this->cipher);
                 $maclen = Crypto::hashlen($this->mac);
 
-                $hmacKey = Crypto::hkdf('sha256', $this->data, $maclen, $this->salt, 'hmac');
-                $encryptionKey = Crypto::hkdf('sha256', $this->data, $keylen, $this->salt, 'encryption');
+                $hmacKey = Crypto::hkdf('sha256', $this->data, $maclen, $salt, 'hmac');
+                $encryptionKey = Crypto::hkdf('sha256', $this->data, $keylen, $salt, 'encryption');
 
                 return [$encryptionKey, $hmacKey];
             default:
                 throw new Exception('Invalid key version');
         }
+    }
+
+    /**
+     * gets the numerical version
+     * @return int
+     */
+    public function getNumericVerison()
+    {
+        return (int) ltrim($this->version, 'k');
     }
 
     /**
@@ -231,10 +252,9 @@ class CryptoKey
      * @param null $id
      * @param null $cipher
      * @param string $mac Algorithm to use for hmac (default sha256)
-     * @param string $salt hkdf salt
      * @param string $version key version
      */
-    public function __construct($data = null, $id = null, $cipher = null, $mac = null, $salt = null, $version = null)
+    public function __construct($data = null, $id = null, $cipher = null, $mac = null, $version = self::CURRENT_KEY_VERSION)
     {
         $this->data = $data;
         if (!$data) {
@@ -255,14 +275,6 @@ class CryptoKey
             $this->mac = $mac;
         }
 
-        if ($salt !== null) {
-            $this->salt = $salt;
-        } else {
-            $this->salt = Crypto::random(32);
-        }
-
-        if ($version) {
-            $this->version = $version;
-        }
+        $this->version = $version;
     }
 }

@@ -6,6 +6,8 @@
 
 namespace starekrow\Lockbox;
 
+use Exception;
+
 /**
  * Secret - Management for secret values with multiple lockboxes
  *
@@ -56,6 +58,7 @@ class Secret
      * @param $key
      *
      * @return bool
+     * @throws Exception if the the fails to load key
      */
     public function unlock($key = null)
     {
@@ -111,6 +114,7 @@ class Secret
      * @param $value
      *
      * @return bool
+     * @throws Exception if it fails to load key
      */
     public function update($value)
     {

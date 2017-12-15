@@ -49,7 +49,7 @@ class Vault
         if (!$dk) {
             return false;
         }
-        if (!$dk->Unlock($masterKey)) {
+        if (!$dk->unlock($masterKey)) {
             return false;
         }
         $this->dataKeys = [];
@@ -74,12 +74,12 @@ class Vault
     {
         $kl = [];
         foreach ($this->dataKeys as $id => $key) {
-            $kl[$id] = $key->Export();
+            $kl[$id] = $key->export();
         }
         $kl["active"] = $this->activeDataKey;
         $dk = new Secret($kl);
         $dk->addLockbox($masterKey);
-        file_put_contents("$this->path/master.keys", $dk->Export());
+        file_put_contents("$this->path/master.keys", $dk->export());
         return true;
     }
 
@@ -241,19 +241,17 @@ class Vault
      * decrypt S3.
      *
      * @param string $passphrase
-     * @param string $salt optional salt value (a non-secret random value).
-     *     Adding salt improves security, but will need to be store to unlock vault
      *
      * @return bool
      * @throws \Exception
      */
-    public function rotateMasterKey($passphrase, $salt = '')
+    public function rotateMasterKey($passphrase)
     {
         if (!$this->activeDataKey) {
             return false;
         }
         $this->close();
-        $mk = new CryptoKey($passphrase, "master", null, null, $salt);
+        $mk = new CryptoKey($passphrase, "master", null, null);
         $this->loadDataKeys($mk);
 
         $ndk = new CryptoKey();
@@ -314,17 +312,15 @@ class Vault
      * already be unlocked for this to succeed.
      *
      * @param $passphrase
-     * @param string $salt optional salt value (a non-secret random value).
-     *     Adding salt improves security, but will need to be store to unlock vault
      *
      * @return bool
      */
-    public function changePassphrase($passphrase, $salt = '')
+    public function changePassphrase($passphrase)
     {
         if (!$this->activeDataKey) {
             return false;
         }
-        $mk = new CryptoKey($passphrase, "master", null, null, $salt);
+        $mk = new CryptoKey($passphrase, "master", null, null);
         $this->saveDataKeys($mk);
         return true;
     }
@@ -367,12 +363,10 @@ class Vault
      * restricting access to the current user.
      *
      * @param string $passphrase
-     * @param string $salt optional salt value (a non-secret random value).
-     *     Adding salt improves security, but will need to be store to unlock vault
      *
      * @return bool
      */
-    public function createVault($passphrase, $salt = '')
+    public function createVault($passphrase)
     {
         if (file_exists("$this->path/master.keys")) {
             return false;
@@ -384,7 +378,7 @@ class Vault
         $this->activeDataKey = $dk->id;
         $this->secrets = [];
 
-        $mk = new CryptoKey($passphrase, "master", null, null, $salt);
+        $mk = new CryptoKey($passphrase, "master", null, null);
 
         if (!is_dir($this->path)) {
             @mkdir($this->path, 0700, true);
@@ -404,13 +398,12 @@ class Vault
      * Opens the vault using the given master passphrase.
      *
      * @param string $passphrase
-     * @param string $salt optional salt value (a non-secret random value)
      *
      * @return bool
      */
-    public function open($passphrase, $salt = '')
+    public function open($passphrase)
     {
-        $mk = new CryptoKey($passphrase, "master", null, null, $salt);
+        $mk = new CryptoKey($passphrase, "master", null, null);
         $did = $this->loadDataKeys($mk);
         if ($did) {
             return true;

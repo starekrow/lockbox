@@ -26,7 +26,7 @@ class CryptoKeyTest extends TestCase
         $cryptoKey = new CryptoKey('foobar', 'test', null, null, 'random salt');
         $result = $cryptoKey->export();
 
-        $this->assertEquals('k1|test|QUVTLTEyOC1DQkM=|Zm9vYmFy|c2hhMjU2|cmFuZG9tIHNhbHQ=', $result);
+        $this->assertEquals('k1|test|QUVTLTEyOC1DQkM=|Zm9vYmFy|c2hhMjU2', $result);
     }
 
     public function testImport()
@@ -39,7 +39,7 @@ class CryptoKeyTest extends TestCase
         $this->assertEquals('test', $cryptoKey->id, 'id mismatch');
 
         //tests k1 (latest version)
-        $kt = 'k1|test|QUVTLTEyOC1DQkM=|Zm9vYmFy|c2hhMjU2|cmFuZG9tIHNhbHQ=';
+        $kt = 'k1|test|QUVTLTEyOC1DQkM=|Zm9vYmFy|c2hhMjU2';
         $cryptoKey = CryptoKey::import($kt);
 
         $this->assertInstanceOf(CryptoKey::class, $cryptoKey, 'import failure');
