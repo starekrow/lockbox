@@ -113,7 +113,7 @@ class CryptoKey
     {
         $maclen = Crypto::hashlen($this->mac);
         $ivlen = Crypto::ivlen($this->cipher);
-        $saltlen = $this->getNumericVerison() > 0 ? self::SALT_LENGTH : 0;
+        $saltlen = $this->getNumericVersion() > 0 ? self::SALT_LENGTH : 0;
 
         $c = base64_decode($ciphertext);
 
@@ -231,7 +231,7 @@ class CryptoKey
      * gets the numerical version
      * @return int
      */
-    public function getNumericVerison()
+    public function getNumericVersion()
     {
         return (int) ltrim($this->version, 'k');
     }
