@@ -49,7 +49,7 @@ class Vault
         if (!$dk) {
             return false;
         }
-        if (!$dk->Unlock($masterKey)) {
+        if (!$dk->unlock($masterKey)) {
             return false;
         }
         $this->dataKeys = [];
@@ -74,12 +74,12 @@ class Vault
     {
         $kl = [];
         foreach ($this->dataKeys as $id => $key) {
-            $kl[$id] = $key->Export();
+            $kl[$id] = $key->export();
         }
         $kl["active"] = $this->activeDataKey;
         $dk = new Secret($kl);
         $dk->addLockbox($masterKey);
-        file_put_contents("$this->path/master.keys", $dk->Export());
+        file_put_contents("$this->path/master.keys", $dk->export());
         return true;
     }
 
@@ -240,7 +240,7 @@ class Vault
      * a master key that doesn't exist on disk anymore. And A has failed to
      * decrypt S3.
      *
-     * @param $passphrase
+     * @param string $passphrase
      *
      * @return bool
      * @throws \Exception
@@ -251,7 +251,7 @@ class Vault
             return false;
         }
         $this->close();
-        $mk = new CryptoKey($passphrase, "master");
+        $mk = new CryptoKey($passphrase, "master", null, null);
         $this->loadDataKeys($mk);
 
         $ndk = new CryptoKey();
@@ -320,7 +320,7 @@ class Vault
         if (!$this->activeDataKey) {
             return false;
         }
-        $mk = new CryptoKey($passphrase, "master");
+        $mk = new CryptoKey($passphrase, "master", null, null);
         $this->saveDataKeys($mk);
         return true;
     }
@@ -362,7 +362,7 @@ class Vault
      * If the vault directory doesn't exist, it will be created with privileges
      * restricting access to the current user.
      *
-     * @param $passphrase
+     * @param string $passphrase
      *
      * @return bool
      */
@@ -378,7 +378,7 @@ class Vault
         $this->activeDataKey = $dk->id;
         $this->secrets = [];
 
-        $mk = new CryptoKey($passphrase, "master");
+        $mk = new CryptoKey($passphrase, "master", null, null);
 
         if (!is_dir($this->path)) {
             @mkdir($this->path, 0700, true);
@@ -397,13 +397,13 @@ class Vault
     /**
      * Opens the vault using the given master passphrase.
      *
-     * @param $passphrase
+     * @param string $passphrase
      *
      * @return bool
      */
     public function open($passphrase)
     {
-        $mk = new CryptoKey($passphrase, "master");
+        $mk = new CryptoKey($passphrase, "master", null, null);
         $did = $this->loadDataKeys($mk);
         if ($did) {
             return true;

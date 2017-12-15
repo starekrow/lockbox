@@ -14,6 +14,17 @@ class VaultTest extends TestCase
         $this->dir = __DIR__ . '/testvault';
     }
 
+    public static function tearDownAfterClass()
+    {
+        $dir = __DIR__ . '/testvault';
+        if (is_dir($dir)) {
+            foreach (glob($dir . '/*') as $file) {
+                @unlink($file);
+            }
+            @rmdir($dir);
+        }
+    }
+
     public function testConstruct()
     {
         $vault = new Vault($this->dir);

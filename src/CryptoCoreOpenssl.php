@@ -37,6 +37,11 @@ class CryptoCoreOpenssl
     }
     public function keylen( $alg )
     {
+        $def = explode('-', $alg);
+        if (count($def) === 3 && is_numeric($def[1])) {
+            return $def[1] / 8;
+        }
+
         throw new Exception( "Unknown algorithm" );
     }
     public function algolist()

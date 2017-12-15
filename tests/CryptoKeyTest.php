@@ -23,15 +23,23 @@ class CryptoKeyTest extends TestCase
 
     public function testExport()
     {
-        $cryptoKey = new CryptoKey('foobar', 'test');
+        $cryptoKey = new CryptoKey('foobar', 'test', null, null, 'random salt');
         $result = $cryptoKey->export();
 
-        $this->assertEquals('k0|test|QUVTLTEyOC1DQkM=|Zm9vYmFy', $result);
+        $this->assertEquals('k1|test|QUVTLTEyOC1DQkM=|Zm9vYmFy|c2hhMjU2', $result);
     }
 
     public function testImport()
     {
+        //tests k0 for backwards compatibility
         $kt = 'k0|test|QUVTLTEyOC1DQkM=|Zm9vYmFy';
+        $cryptoKey = CryptoKey::import($kt);
+
+        $this->assertInstanceOf(CryptoKey::class, $cryptoKey, 'import failure');
+        $this->assertEquals('test', $cryptoKey->id, 'id mismatch');
+
+        //tests k1 (latest version)
+        $kt = 'k1|test|QUVTLTEyOC1DQkM=|Zm9vYmFy|c2hhMjU2';
         $cryptoKey = CryptoKey::import($kt);
 
         $this->assertInstanceOf(CryptoKey::class, $cryptoKey, 'import failure');
