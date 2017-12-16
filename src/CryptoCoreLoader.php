@@ -5,72 +5,83 @@
  */
 
 namespace starekrow\Lockbox;
+
 use Exception;
 
 /**
  * CryptoCoreLoader - A driver-loading driver
  *
- * This is the default crypto driver. It tries to auto-select a working core 
+ * This is the default crypto driver. It tries to auto-select a working core
  * and re-issue the function call.
  *
  * @package starekrow\Lockbox
  */
-class CryptoCoreLoader 
-    implements CryptoCore
+class CryptoCoreLoader implements CryptoCore
 {
-    public function hash( $alg, $data )
+    public function hash($alg, $data)
     {
         Crypto::init();
-        return Crypto::hash( $alg, $data );
+
+        return Crypto::hash($alg, $data);
     }
-    public function hmac( $alg, $key, $data )
+    public function hmac($alg, $key, $data)
     {
         Crypto::init();
-        return Crypto::hmac( $alg, $key, $data );
+
+        return Crypto::hmac($alg, $key, $data);
     }
-    public function hkdf( $alg, $ikm, $len, $salt = "", $info = "" )
+    public function hkdf($alg, $ikm, $len, $salt = "", $info = "")
     {
         Crypto::init();
-        return Crypto::hkdf( $alg, $ikm, $len, $salt, $info );
+
+        return Crypto::hkdf($alg, $ikm, $len, $salt, $info);
     }
-    public function encrypt( $alg, $key, $iv, $data )
+    public function encrypt($alg, $key, $iv, $data)
     {
         Crypto::init();
-        return Crypto::encrypt( $alg, $key, $iv, $data );
+
+        return Crypto::encrypt($alg, $key, $iv, $data);
     }
-    public function decrypt( $alg, $key, $iv, $data )
+    public function decrypt($alg, $key, $iv, $data)
     {
         Crypto::init();
-        return Crypto::decrypt( $alg, $key, $iv, $data );
+
+        return Crypto::decrypt($alg, $key, $iv, $data);
     }
-    public function hashdiff( $h1, $h2 )
+    public function hashdiff($h1, $h2)
     {
         Crypto::init();
-        return Crypto::hashdiff( $h1, $h2 );
+
+        return Crypto::hashdiff($h1, $h2);
     }
-    public function random( $count )
+    public function random($count)
     {
         Crypto::init();
-        return Crypto::random( $count );
+
+        return Crypto::random($count);
     }
-    public function ivlen( $alg )
+    public function ivlen($alg)
     {
         Crypto::init();
-        return Crypto::ivlen( $alg );
+
+        return Crypto::ivlen($alg);
     }
-    public function keylen( $alg )
+    public function keylen($alg)
     {
         Crypto::init();
-        return Crypto::keylen( $alg );
+
+        return Crypto::keylen($alg);
     }
-    public function hashlen( $alg )
+    public function hashlen($alg)
     {
         Crypto::init();
-        return Crypto::hashlen( $alg );
+
+        return Crypto::hashlen($alg);
     }
     public function algolist()
     {
         Crypto::init();
+
         return Crypto::algolist();
     }
 }

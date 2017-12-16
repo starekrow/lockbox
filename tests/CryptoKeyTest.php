@@ -5,6 +5,9 @@ namespace starekrow\Lockbox\tests;
 use PHPUnit\Framework\TestCase;
 use starekrow\Lockbox\CryptoKey;
 
+/**
+ * @coversNothing
+ */
 class CryptoKeyTest extends TestCase
 {
     public function testConstruct()
@@ -18,24 +21,32 @@ class CryptoKeyTest extends TestCase
     {
         $cryptoKey = new CryptoKey('foobar', 'test');
 
-        $this->assertEquals('test', $cryptoKey->id, 'Missing id');
+        $this->assertSame('test', $cryptoKey->id, 'Missing id');
     }
 
     public function testExport()
     {
-        $cryptoKey = new CryptoKey('foobar', 'test');
+        $cryptoKey = new CryptoKey('foobar', 'test', null, null, 'random salt');
         $result = $cryptoKey->export();
 
-        $this->assertEquals('k0|test|QUVTLTEyOC1DQkM=|Zm9vYmFy', $result);
+        $this->assertSame('k1|test|QUVTLTEyOC1DQkM=|Zm9vYmFy|c2hhMjU2', $result);
     }
 
     public function testImport()
     {
+        //tests k0 for backwards compatibility
         $kt = 'k0|test|QUVTLTEyOC1DQkM=|Zm9vYmFy';
         $cryptoKey = CryptoKey::import($kt);
 
         $this->assertInstanceOf(CryptoKey::class, $cryptoKey, 'import failure');
-        $this->assertEquals('test', $cryptoKey->id, 'id mismatch');
+        $this->assertSame('test', $cryptoKey->id, 'id mismatch');
+
+        //tests k1 (latest version)
+        $kt = 'k1|test|QUVTLTEyOC1DQkM=|Zm9vYmFy|c2hhMjU2';
+        $cryptoKey = CryptoKey::import($kt);
+
+        $this->assertInstanceOf(CryptoKey::class, $cryptoKey, 'import failure');
+        $this->assertSame('test', $cryptoKey->id, 'id mismatch');
     }
 
     public function testEncryptDecrypt()
@@ -45,10 +56,10 @@ class CryptoKeyTest extends TestCase
         $ciphertext = $cryptoKey->lock($msg);
 
         $this->assertInternalType('string', $ciphertext, 'Encryption failed');
-        $this->assertNotEquals($msg, $ciphertext, 'Encryption returned plaintext');
+        $this->assertNotSame($msg, $ciphertext, 'Encryption returned plaintext');
 
         $dec = $cryptoKey->unlock($ciphertext);
 
-        $this->assertEquals($msg, $dec);
+        $this->assertSame($msg, $dec);
     }
 }

@@ -5,9 +5,23 @@ namespace starekrow\Lockbox\tests;
 use PHPUnit\Framework\TestCase;
 use starekrow\Lockbox\Vault;
 
+/**
+ * @coversNothing
+ */
 class VaultTest extends TestCase
 {
     public $dir;
+
+    public static function tearDownAfterClass()
+    {
+        $dir = __DIR__ . '/testvault';
+        if (is_dir($dir)) {
+            foreach (glob($dir . '/*') as $file) {
+                @unlink($file);
+            }
+            @rmdir($dir);
+        }
+    }
 
     public function setUp()
     {
@@ -79,7 +93,7 @@ class VaultTest extends TestCase
         $vault->put('test1', 'This is a test.');
         $got = $vault->get('test1');
 
-        $this->assertEquals('This is a test.', $got, 'original vault');
+        $this->assertSame('This is a test.', $got, 'original vault');
 
         $vault->Close();
 
@@ -87,7 +101,7 @@ class VaultTest extends TestCase
         $vault2->open('foobar');
         $got = $vault2->get('test1');
 
-        $this->assertEquals('This is a test.', $got, 'after re-open');
+        $this->assertSame('This is a test.', $got, 'after re-open');
 
         $vault2->destroyVault();
     }
@@ -110,8 +124,8 @@ class VaultTest extends TestCase
 
         $v3 = new Vault($this->dir);
         $this->assertTrue($v3->open('gobbledy'), 'open after key change');
-        $this->assertEquals('This is a test.', $v3->get('test1'), 'val1');
-        $this->assertEquals('Another test', $v3->get('test2'), 'val2');
+        $this->assertSame('This is a test.', $v3->get('test1'), 'val1');
+        $this->assertSame('Another test', $v3->get('test2'), 'val2');
         $v3->destroyVault();
     }
 
@@ -132,8 +146,8 @@ class VaultTest extends TestCase
         $v3 = new Vault($this->dir);
 
         $this->assertTrue($v3->open('foobar'), 'open after key rotate');
-        $this->assertEquals('This is a test.', $v3->get('test1'), 'val1');
-        $this->assertEquals('Another test', $v3->get('test2'), 'val2');
+        $this->assertSame('This is a test.', $v3->get('test1'), 'val1');
+        $this->assertSame('Another test', $v3->get('test2'), 'val2');
 
         $v3->destroyVault();
     }

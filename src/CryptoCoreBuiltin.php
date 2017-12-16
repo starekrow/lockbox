@@ -5,6 +5,7 @@
  */
 
 namespace starekrow\Lockbox;
+
 use Exception;
 
 /**
@@ -14,23 +15,22 @@ use Exception;
  * built-in functions. It covers mostly hashing and random number generation.
  * For encryption, we'd need to add in some software drivers, and openssl is
  * pervasive enough that maybe that'll never be needed.
- * 
+ *
  * @package starekrow\Lockbox
  */
-class CryptoCoreBuiltin
-    implements CryptoCore
+class CryptoCoreBuiltin implements CryptoCore
 {
     protected $cache = [];
 
-    public function hash( $alg, $data )
+    public function hash($alg, $data)
     {
-        return hash( $alg, $data, true );
+        return hash($alg, $data, true);
     }
-    public function hmac( $alg, $key, $data )
+    public function hmac($alg, $key, $data)
     {
-        return hash_hmac( $alg, $data, $key, true );
+        return hash_hmac($alg, $data, $key, true);
     }
-    public function hkdf( $alg, $ikm, $len, $salt = "", $info = "" )
+    public function hkdf($alg, $ikm, $len, $salt = "", $info = "")
     {
         if (function_exists("hash_hkdf")) {
             return hash_hkdf($alg, $ikm, $len, $info, $salt);
@@ -42,22 +42,23 @@ class CryptoCoreBuiltin
             $t = hash_hmac($alg, $t . $info . chr($i), $prk, true);
             $okm .= $t;
         }
+
         return substr($okm, 0, $len);
     }
-    public function encrypt( $alg, $key, $iv, $data )
+    public function encrypt($alg, $key, $iv, $data)
     {
-        throw new Exception( "No usable encryptor" );
+        throw new Exception("No usable encryptor");
     }
-    public function decrypt( $alg, $key, $iv, $data )
+    public function decrypt($alg, $key, $iv, $data)
     {
-        throw new Exception( "No usable decryptor" );
+        throw new Exception("No usable decryptor");
     }
-    public function hashdiff( $h1, $h2 )
+    public function hashdiff($h1, $h2)
     {
         if (function_exists("hash_equals")) {
             return !hash_equals($h1, $h2);
         }
-        if (strlen($h1) != strlen($h2)) {
+        if (strlen($h1) !== strlen($h2)) {
             return false;
         }
         $x = $h1 ^ $h2;
@@ -65,34 +66,37 @@ class CryptoCoreBuiltin
         for ($i = strlen($x) - 1; $i >= 0; $i--) {
             $ret |= ord($x[$i]);
         }
+
         return !!$ret;
     }
-    public function random( $count )
+    public function random($count)
     {
-        if (function_exists( "random_bytes" )) {
-            return random_bytes( $count );
+        if (function_exists("random_bytes")) {
+            return random_bytes($count);
         }
         // TODO: windows: COM stuff, linux: /dev/urandom
-        if (function_exists( "openssl_random_pseudo_bytes" )) {
-            return openssl_random_pseudo_bytes( $count );
+        if (function_exists("openssl_random_pseudo_bytes")) {
+            return openssl_random_pseudo_bytes($count);
         }
-        throw new Exception( "No good source of randomness found" );
+
+        throw new Exception("No good source of randomness found");
     }
-    public function ivlen( $alg )
+    public function ivlen($alg)
     {
-        throw new Exception( "Unknown algorithm" );
+        throw new Exception("Unknown algorithm");
     }
-    public function keylen( $alg )
+    public function keylen($alg)
     {
-        throw new Exception( "Unknown algorithm" );
+        throw new Exception("Unknown algorithm");
     }
-    public function hashlen( $alg )
+    public function hashlen($alg)
     {
         $k = "hashlen-$alg";
-        if (empty( $this->cache[ $k ] )) {
-            $tmp = $this->hash( $alg, "blahblahblah" );
-            $this->cache[ $k ] = strlen( $tmp );
+        if (empty($this->cache[ $k ])) {
+            $tmp = $this->hash($alg, "blahblahblah");
+            $this->cache[ $k ] = strlen($tmp);
         }
+
         return $this->cache[ $k ];
     }
     public function algolist()
