@@ -91,6 +91,12 @@ namespace starekrow\Lockbox;
  */
 class Token
 {
+    function base64url_encode($input) {
+        return strtr(base64_encode($input), '+/=', '-_.');
+    }  
+    function base64url_decode($input) {
+        return base64_decode(strtr($input, '-_.', '+/='));
+    }
     static function hashlen($algo)
     {
         switch (strtolower(str_replace('-', '', $algo))) {
@@ -149,7 +155,12 @@ class Token
             return null;
         }
         $parts = explode(".", $data);
-
+        if (count($parts) != 2 || strlen($parts[0]) < 1 
+                               || strlen($parts[1]) < 1) {
+            return null;
+        }
+        if ()
+        
     }
 
     function sign($data)
